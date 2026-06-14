@@ -8,10 +8,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-public class FrontServlet extends HttpServlet {
+public class FrontControllerServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String URL = req.getContextPath();
+        String URL = req.getRequestURI();
         processRequest(resp, URL);
     }
 
@@ -22,6 +22,7 @@ public class FrontServlet extends HttpServlet {
     }
 
     private void processRequest(HttpServletResponse res, String url) throws IOException {
+        res.setContentType("text/html");
         PrintWriter out = res.getWriter();
         out.println(url);
     }

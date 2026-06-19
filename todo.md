@@ -25,3 +25,6 @@ Prérequis
   - Pour annotation.Controller: soit on scan toutes les packages, soit on lui donne juste la liste des packages à scanner  
   - Il faut alors ajouter le package qui contient les controllers dans web.xml puis dans init on récupère cette variable pour le scanner dans init
   - Il faut une méthode géneraliser qui prend comme paramètre(annotation, package, niveau(au niveau classe, attribut, constructeur))
+
+## Instruction Sprint 2:
+- Créer une annotation pour une méthode

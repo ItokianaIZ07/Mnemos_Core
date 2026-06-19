@@ -16,13 +16,17 @@ public class FrontControllerServlet extends HttpServlet {
     List<String> listController;
 
     public void init(){
-        Utilitaire util = new Utilitaire();
-        String packageName = getInitParameter("packageController");
-        try {
-            listController = util.getListController(packageName, Controller.class);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        /* Raha tsy hampiasa listener sinon any ambany */
+//        Utilitaire util = new Utilitaire();
+//        String packageName = getInitParameter("packageController");
+//        try {
+//            listController = util.getListController(packageName, Controller.class);
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+
+        // D ny init-param anaty web.xml ovaina context-param
+
     }
 
     @Override
@@ -40,7 +44,8 @@ public class FrontControllerServlet extends HttpServlet {
     private void processRequest(HttpServletResponse res, String url) throws IOException {
         res.setContentType("text/html");
         PrintWriter out = res.getWriter();
-        for(String clazz: listController){
+        List<String> controllera = (List<String>) getServletContext().getAttribute("controllers");
+        for(String clazz: controllera){
             out.println(clazz+"\n");
         }
     }

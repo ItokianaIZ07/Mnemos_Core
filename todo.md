@@ -9,8 +9,6 @@
 - Pour le test:
 <<<<<<< Updated upstream
 * configurer le web.xml du test afin d'initialiser le servlet et aussi les request param
-=======
-* configurer le web.xml du test afin d'initialiser le servlet et aussi les request param
 
 ## Instruction Sprint 1:
 ```
@@ -30,8 +28,4 @@ Prérequis
   - Il faut une méthode géneraliser qui prend comme paramètre(annotation, package, niveau(au niveau classe, attribut, constructeur))
 
 ## Instruction Sprint 2:
-- Créer une annotation pour une méthode urlMapping
-  - On met dans le paramètre de cette annotation de l'url
-- On prend tous les controllers et afficher
-  - url-classe-méthode (à stocker quelque par dans FrontServlet)
->>>>>>> Stashed changes
+- Créer une annotation pour une méthode

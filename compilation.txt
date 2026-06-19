@@ -1,0 +1,6 @@
+javac -cp "lib/*;." -d "WEB-INF/classes" (Get-ChildItem -Path ".\src\main\java\com\test\Test1\*.java" -Recurse).FullName
+javac -cp "lib/*;." -d "bin" (Get-ChildItem -Path ".\src\main\java\com\mnemos\*\*.java" -Recurse).FullName        
+
+dir /s /b ".\src\main\java\com\mnemos\*.java" > sources.txt
+
+javac -cp "lib/*;." -d bin @sources.txt

@@ -7,7 +7,6 @@
 **Objectif:**
 - Afficher l'url par le processRequest
 - Pour le test:
-<<<<<<< Updated upstream
 * configurer le web.xml du test afin d'initialiser le servlet et aussi les request param
 
 ## Instruction Sprint 1:

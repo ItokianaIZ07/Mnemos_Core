@@ -1,12 +1,14 @@
 package com.mnemos.utils;
 
+import com.mnemos.annotation.UrlMapping;
+
+import java.beans.MethodDescriptor;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 
 public class Utilitaire {
     private List<Class<?>> listClass;
@@ -56,5 +58,54 @@ public class Utilitaire {
             }
         }
         return controllerList;
+    }
+
+    public List<Class<?>> getListControllerClass(String packageName, Class<? extends Annotation> annotation) throws IOException, ClassNotFoundException {
+        scanPackage(packageName);
+        List<Class<?>> controllerList = new ArrayList<>();
+
+        for(Class<?> c: listClass){
+            if(c.isAnnotationPresent(annotation)){
+                controllerList.add(c);
+            }
+        }
+        return controllerList;
+    }
+
+    public Map<String, List<Method>> getMethodWithUrl(String url, Class<? extends Annotation> annotation, List<Class<?>> controllers){
+        if(!annotation.isAssignableFrom(UrlMapping.class)){
+            throw new RuntimeException("Invalid annotation type");
+        }
+
+        Map<String, List<Method>> methodAndClass = new HashMap<>();
+
+        for(Class<?> c: controllers){
+            String className = c.getName();
+            Method[] methods = c.getMethods();
+            List<Method> methodList = new ArrayList<>();
+            for(Method method: methods){
+                if(method.isAnnotationPresent(annotation)){
+                   UrlMapping urlMapping = (UrlMapping) method.getAnnotation(annotation);
+                   String link = urlMapping.url();
+                   if((url.isEmpty() && link.equals("/")) || url.equals(link)){
+                       methodList.add(method);
+                   }
+                }
+            }
+            if(!methodList.isEmpty()){
+                methodAndClass.put(className, methodList);
+            }
+        }
+
+        return methodAndClass;
+    }
+
+    public static boolean isUrlValid(String url, List<String> urlValid){
+        for(String link: urlValid){
+            if(url.equals(link)){
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -27,4 +27,6 @@ Prérequis
   - Il faut une méthode géneraliser qui prend comme paramètre(annotation, package, niveau(au niveau classe, attribut, constructeur))
 
 ## Instruction Sprint 2:
-- Créer une annotation pour une méthode
+- Créer une annotation pour une méthode : urlMapping avec attribut url
+- affichena ny liste url-classe-méthode misy anazy
+- throws Exception(liste url supporté) si l'url saisie n'est pas valide

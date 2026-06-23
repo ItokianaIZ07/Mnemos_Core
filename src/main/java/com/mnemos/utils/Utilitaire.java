@@ -147,6 +147,12 @@ public class Utilitaire {
                         UrlMethod um = new UrlMethod(link, requestMethod);
                         RouteMapping route = new RouteMapping(controller, method);
 
+                        for(Map.Entry<UrlMethod, RouteMapping> entry: routes.entrySet()){
+                            UrlMethod urlMethodExistant = entry.getKey();
+                            if(urlMethodExistant.equals(um)){
+                                throw new RuntimeException("La méthode HTTP "+um.getMethod()+" associé au lien "+url+" dans la classe "+controller.getName()+" est déjà utiliser dans la méthode "+route.getMethod().getName()+" de la classe "+route.getController().getName());
+                            }
+                        }
                         routes.put(um, route);
                     }
                 }

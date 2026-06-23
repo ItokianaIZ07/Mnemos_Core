@@ -97,7 +97,6 @@ public class Utilitaire {
                     }
                 }
             }
-
         }
         return routes;
     }
@@ -128,6 +127,33 @@ public class Utilitaire {
         }
 
         return methodAndClass;
+    }
+
+    public Map<UrlMethod, RouteMapping> getMethods(String url, Class<? extends Annotation> annotation, List<Class<?>> controllers){
+        if(!annotation.isAssignableFrom(UrlMapping.class)){
+            throw new RuntimeException("Invalid annotation type");
+        }
+
+        Map<UrlMethod, RouteMapping> routes = new HashMap<>();
+
+        for(Class<?> controller: controllers){
+            Method[] methods = controller.getMethods();
+            for(Method method: methods){
+                if(method.isAnnotationPresent(annotation)){
+                    UrlMapping urlMapping = (UrlMapping) method.getAnnotation(annotation);
+                    String link = urlMapping.url();
+                    if((url.isEmpty() && link.equals("/")) || url.equals(link)){
+                        String requestMethod = urlMapping.method();
+                        UrlMethod um = new UrlMethod(link, requestMethod);
+                        RouteMapping route = new RouteMapping(controller, method);
+
+                        routes.put(um, route);
+                    }
+                }
+            }
+        }
+
+        return routes;
     }
 
     public List<String> getExistingLink(List<Class<?>> controllers, Class<? extends Annotation> annotation){

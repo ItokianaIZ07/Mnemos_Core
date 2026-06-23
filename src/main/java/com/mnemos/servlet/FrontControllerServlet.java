@@ -3,6 +3,7 @@ package com.mnemos.servlet;
 import com.mnemos.annotation.Controller;
 import com.mnemos.annotation.UrlMapping;
 import com.mnemos.utils.RouteMapping;
+import com.mnemos.utils.UrlMethod;
 import com.mnemos.utils.Utilitaire;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -67,15 +68,24 @@ public class FrontControllerServlet extends HttpServlet {
 
 //        res.setContentType("text/html");
         PrintWriter out = res.getWriter();
-        Map<String, List<Method>> methodAssocieUrl = util.getMethodWithUrl(url, UrlMapping.class, controllers);
-        Map<String, RouteMapping> methodUrl = util.getMethodAssocieUrl(url, UrlMapping.class, controllers);
+//        Map<String, List<Method>> methodAssocieUrl = util.getMethodWithUrl(url, UrlMapping.class, controllers);
+//        Map<String, RouteMapping> methodUrl = util.getMethodAssocieUrl(url, UrlMapping.class, controllers);
 
+        Map<UrlMethod, RouteMapping> routes = util.getMethods(url, UrlMapping.class, controllers);
 
-        for(Map.Entry<String, RouteMapping> entry: methodUrl.entrySet()){
-            String urlAssocie = entry.getKey();
+        for(Map.Entry<UrlMethod, RouteMapping> entry: routes.entrySet()){
+            UrlMethod urlMethod = entry.getKey();
             RouteMapping route = entry.getValue();
-            out.println("URL: "+url+" | Controller: "+route.getController()+" | Method: "+route.getMethod().getName());
+
+            out.println("URL: "+urlMethod.getUrl()+" | method: "+urlMethod.getMethod()+" | Controller: "+route.getController().getName()+" | Method: "+route.getMethod().getName());
         }
+
+
+//        for(Map.Entry<String, RouteMapping> entry: methodUrl.entrySet()){
+//            String urlAssocie = entry.getKey();
+//            RouteMapping route = entry.getValue();
+//            out.println("URL: "+url+" | Controller: "+route.getController()+" | Method: "+route.getMethod().getName());
+//        }
 
 //        out.println("URL: "+url);
 

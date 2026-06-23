@@ -2,6 +2,7 @@ package com.mnemos.servlet;
 
 import com.mnemos.annotation.Controller;
 import com.mnemos.annotation.UrlMapping;
+import com.mnemos.utils.RouteMapping;
 import com.mnemos.utils.Utilitaire;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -18,9 +19,13 @@ import java.util.StringJoiner;
 
 public class FrontControllerServlet extends HttpServlet {
 
-    List<String> listController;
+    private Utilitaire util;
+    private List<Class<?>> controllers;
+
 
     public void init(){
+        util = new Utilitaire();
+        controllers = (List<Class<?>>) getServletContext().getAttribute("controllers");
         /* Raha tsy hampiasa listener sinon any ambany */
 //        Utilitaire util = new Utilitaire();
 //        String packageName = getInitParameter("packageController");
@@ -49,9 +54,10 @@ public class FrontControllerServlet extends HttpServlet {
     }
 
     private void processRequest(HttpServletResponse res, String url) throws IOException {
-        String[] validUrl = new String[]{"","/","/salut", "/hello"};
 
-        if(!Utilitaire.isUrlValid(url, Arrays.stream(validUrl).toList())){
+        List<String> validUrl = util.getExistingLink(controllers, UrlMapping.class);
+
+        if(!util.isUrlValid(url, validUrl)){
             StringJoiner sj = new StringJoiner(", ");
             for(String s: validUrl){
                 sj.add(s);
@@ -61,16 +67,25 @@ public class FrontControllerServlet extends HttpServlet {
 
 //        res.setContentType("text/html");
         PrintWriter out = res.getWriter();
-        List<Class<?>> controllers = (List<Class<?>>) getServletContext().getAttribute("controllers");
-        Map<String, List<Method>> methodAssocieUrl = (new Utilitaire()).getMethodWithUrl(url, UrlMapping.class, controllers);
+        Map<String, List<Method>> methodAssocieUrl = util.getMethodWithUrl(url, UrlMapping.class, controllers);
+        Map<String, RouteMapping> methodUrl = util.getMethodAssocieUrl(url, UrlMapping.class, controllers);
 
-        for(Map.Entry<String, List<Method>> entry: methodAssocieUrl.entrySet()){
-            String clazz = entry.getKey();
-            List<Method> methods = entry.getValue();
-            out.println(clazz+":");
-            for(Method m: methods){
-                out.println("\t"+m.getName());
-            }
+
+        for(Map.Entry<String, RouteMapping> entry: methodUrl.entrySet()){
+            String urlAssocie = entry.getKey();
+            RouteMapping route = entry.getValue();
+            out.println("URL: "+url+" | Controller: "+route.getController()+" | Method: "+route.getMethod().getName());
         }
+
+//        out.println("URL: "+url);
+
+//        for(Map.Entry<String, List<Method>> entry: methodAssocieUrl.entrySet()){
+//            String clazz = entry.getKey();
+//            List<Method> methods = entry.getValue();
+//            out.println(clazz+":");
+//            for(Method m: methods){
+//                out.println("\t"+m.getName());
+//            }
+//        }
     }
 }

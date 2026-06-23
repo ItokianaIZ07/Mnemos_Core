@@ -16,7 +16,8 @@ public class AppStartListener implements ServletContextListener {
         Utilitaire util = new Utilitaire();
         String packageName = context.getInitParameter("packageController");
         try {
-            List<String> controllers = util.getListController(packageName, Controller.class);
+//            List<String> controllers = util.getListController(packageName, Controller.class);
+            List<Class<?>> controllers = util.getListControllerClass(packageName, Controller.class);
             context.setAttribute("controllers", controllers);
         } catch (Exception e) {
             throw new RuntimeException(e);

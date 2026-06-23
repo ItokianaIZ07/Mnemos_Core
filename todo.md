@@ -35,6 +35,3 @@ Prérequis
 - Création classe UrlMethod(url, method="GET"/"POST")
 - Ajout attribut method pour l'annotation
 - Redifinir la fonction equals pour UrlMethod pour éviter les doublons
-
-## Instruction Sprint 3-bis:
-- Executer la méthode qui correpond au lien

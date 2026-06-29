@@ -7,7 +7,9 @@ import java.beans.MethodDescriptor;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.*;
 
@@ -149,8 +151,10 @@ public class Utilitaire {
 
                         for(Map.Entry<UrlMethod, RouteMapping> entry: routes.entrySet()){
                             UrlMethod urlMethodExistant = entry.getKey();
+                            RouteMapping routeExistant = entry.getValue();
                             if(urlMethodExistant.equals(um)){
-                                throw new RuntimeException("La méthode HTTP "+um.getMethod()+" associé au lien "+url+" dans la classe "+controller.getName()+" est déjà utiliser dans la méthode "+route.getMethod().getName()+" de la classe "+route.getController().getName());
+                                throw new RuntimeException("La méthode HTTP "+um.getMethod()+" associé au lien "+url+" dans la classe "+controller.getName()
+                                        +" est déjà utiliser dans la méthode "+route.getMethod().getName()+" de la classe "+route.getController().getName());
                             }
                         }
                         routes.put(um, route);
@@ -179,6 +183,18 @@ public class Utilitaire {
         }
 
         return links;
+    }
+
+    public Object invoke(RouteMapping routeMapping)  {
+        try{
+            Class<?> controller = routeMapping.getController();
+            Object o = controller.getConstructor().newInstance();
+            Method method = routeMapping.getMethod();
+
+            return method.invoke(o);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | InstantiationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public boolean isUrlValid(String url, List<String> urlValid){

@@ -44,17 +44,21 @@ public class FrontControllerServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String projectPath = req.getContextPath();
         String URL = req.getRequestURI();
+        String method = req.getMethod();
         URL = URL.substring(projectPath.length());
-        processRequest(resp, URL);
+        processRequest(resp, URL, method);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String URL = req.getContextPath();
-        processRequest(resp, URL);
+        String projectPath = req.getContextPath();
+        String URL = req.getRequestURI();
+        String method = req.getMethod();
+        URL = URL.substring(projectPath.length());
+        processRequest(resp, URL, method);
     }
 
-    private void processRequest(HttpServletResponse res, String url) throws IOException {
+    private void processRequest(HttpServletResponse res, String url, String method) throws IOException {
 
         List<String> validUrl = util.getExistingLink(controllers, UrlMapping.class);
 
@@ -78,6 +82,15 @@ public class FrontControllerServlet extends HttpServlet {
             RouteMapping route = entry.getValue();
 
             out.println("URL: "+urlMethod.getUrl()+" | method: "+urlMethod.getMethod()+" | Controller: "+route.getController().getName()+" | Method: "+route.getMethod().getName());
+
+            if(method.equals(urlMethod.getMethod())){
+                try{
+                    Object returnValue =  util.invoke(route);
+                    out.println("Valeur retournee: " + returnValue);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
 
 

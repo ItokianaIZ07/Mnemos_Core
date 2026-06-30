@@ -22,11 +22,13 @@ public class FrontControllerServlet extends HttpServlet {
 
     private Utilitaire util;
     private List<Class<?>> controllers;
+    private Map<UrlMethod, RouteMapping> routes;
 
 
     public void init(){
         util = new Utilitaire();
         controllers = (List<Class<?>>) getServletContext().getAttribute("controllers");
+        routes = (Map<UrlMethod, RouteMapping>) getServletContext().getAttribute("routes");
         /* Raha tsy hampiasa listener sinon any ambany */
 //        Utilitaire util = new Utilitaire();
 //        String packageName = getInitParameter("packageController");
@@ -75,23 +77,35 @@ public class FrontControllerServlet extends HttpServlet {
 //        Map<String, List<Method>> methodAssocieUrl = util.getMethodWithUrl(url, UrlMapping.class, controllers);
 //        Map<String, RouteMapping> methodUrl = util.getMethodAssocieUrl(url, UrlMapping.class, controllers);
 
-        Map<UrlMethod, RouteMapping> routes = util.getMethods(url, UrlMapping.class, controllers);
+//        Map<UrlMethod, RouteMapping> routes = util.getMethods(url, UrlMapping.class, controllers);
 
-        for(Map.Entry<UrlMethod, RouteMapping> entry: routes.entrySet()){
-            UrlMethod urlMethod = entry.getKey();
-            RouteMapping route = entry.getValue();
+        UrlMethod um = new UrlMethod(url, method);
 
-            out.println("URL: "+urlMethod.getUrl()+" | method: "+urlMethod.getMethod()+" | Controller: "+route.getController().getName()+" | Method: "+route.getMethod().getName());
+        RouteMapping routeMapping = util.getByUrlMethod(um, routes);
 
-            if(method.equals(urlMethod.getMethod())){
-                try{
-                    Object returnValue =  util.invoke(route);
-                    out.println("Valeur retournee: " + returnValue);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
+
+        out.println("Controller : " + routeMapping.getController().getName());
+        out.println("Nom de la classe : " + routeMapping.getController().getSimpleName());
+
+        out.println("Méthode : " + routeMapping.getMethod().getName());
+
+
+//        for(Map.Entry<UrlMethod, RouteMapping> entry: routes.entrySet()){
+//            UrlMethod urlMethod = entry.getKey();
+//            RouteMapping route = entry.getValue();
+//
+//            out.println("URL: "+urlMethod.getUrl()+" | method: "+urlMethod.getMethod()+" | Controller: "+route.getController().getName()+" | Method: "+route.getMethod().getName());
+//
+//            if(method.equals(urlMethod.getMethod())){
+//                try{
+//                    out.println("URL: "+urlMethod.getUrl()+" | method: "+urlMethod.getMethod()+" | Controller: "+route.getController().getName()+" | Method invoqué: "+route.getMethod().getName());
+//                    Object returnValue =  util.invoke(route);
+//                    out.println("Valeur retournee: " + returnValue);
+//                } catch (Exception e) {
+//                    throw new RuntimeException(e);
+//                }
+//            }
+//        }
 
 
 //        for(Map.Entry<String, RouteMapping> entry: methodUrl.entrySet()){

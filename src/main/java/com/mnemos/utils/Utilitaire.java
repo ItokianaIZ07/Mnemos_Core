@@ -2,6 +2,7 @@ package com.mnemos.utils;
 
 import com.mnemos.annotation.UrlMapping;
 import com.mnemos.exception.RouteMappingException;
+import com.mnemos.exception.UrlNotFoundException;
 
 import java.beans.MethodDescriptor;
 import java.io.File;
@@ -131,6 +132,34 @@ public class Utilitaire {
         return methodAndClass;
     }
 
+    public Map<UrlMethod, RouteMapping> getMethods(Class<? extends Annotation> annotation, List<Class<?>> controllers){
+        if(!annotation.isAssignableFrom(UrlMapping.class)){
+            throw new RuntimeException("Invalid annotation type");
+        }
+
+        Map<UrlMethod, RouteMapping> routes = new HashMap<>();
+
+        for(Class<?> controller: controllers){
+            Method[] methods = controller.getMethods();
+            for(Method method: methods){
+                if(method.isAnnotationPresent(annotation)){
+                    UrlMapping urlMapping = (UrlMapping) method.getAnnotation(annotation);
+                    String link = urlMapping.url();
+                    String requestMethod = urlMapping.method();
+                    UrlMethod um = new UrlMethod(link, requestMethod);
+                    RouteMapping route = new RouteMapping(controller, method);
+
+                    if(routes.containsKey(um)){
+                        throw new RuntimeException("L'url "+link+" est déjà utiliser dans "+routes.get(um).getMethod().getName());
+                    }
+                    routes.put(um, route);
+                }
+            }
+        }
+
+        return routes;
+    }
+
     public Map<UrlMethod, RouteMapping> getMethods(String url, Class<? extends Annotation> annotation, List<Class<?>> controllers){
         if(!annotation.isAssignableFrom(UrlMapping.class)){
             throw new RuntimeException("Invalid annotation type");
@@ -206,5 +235,31 @@ public class Utilitaire {
             }
         }
         return false;
+    }
+
+    public RouteMapping getByUrlMethod(UrlMethod urlMethod, Map<UrlMethod, RouteMapping> routes) {
+        RouteMapping route = routes.get(urlMethod);
+        StringBuilder message = new StringBuilder("Aucune methode associer a l'url: "+urlMethod.getUrl()+"\n");
+        for (Map.Entry<UrlMethod, RouteMapping> entry : routes.entrySet()) {
+
+            String url = entry.getKey().getUrl();
+            String httpMethod = entry.getKey().getMethod();
+            String methodName = entry.getValue().getMethod().getName();
+            String controllerName = entry.getValue().getController().getSimpleName();
+
+            message.append("URL: ")
+                    .append(url)
+                    .append("\tMéthode: ")
+                    .append(methodName)
+                    .append("\tMéthode HTTP: ")
+                    .append(httpMethod)
+                    .append("\tClasse: ")
+                    .append(controllerName)
+                    .append("\n");
+        }
+        if(route == null){
+            throw new UrlNotFoundException(message.toString());
+        }
+        return route;
     }
 }

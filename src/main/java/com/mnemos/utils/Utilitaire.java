@@ -249,9 +249,9 @@ public class Utilitaire {
 
             message.append("URL: ")
                     .append(url)
-                    .append("\tMéthode: ")
+                    .append("\tMethode: ")
                     .append(methodName)
-                    .append("\tMéthode HTTP: ")
+                    .append("\tMethode HTTP: ")
                     .append(httpMethod)
                     .append("\tClasse: ")
                     .append(controllerName)

@@ -22,13 +22,10 @@ public class AppStartListener implements ServletContextListener {
         String packageName = context.getInitParameter("packageController");
         try {
 //            List<String> controllers = util.getListController(packageName, Controller.class);
-            List<Class<?>> controllers = util.getListControllerClass(packageName, Controller.class);
-
             Map<UrlMethod, RouteMapping> routes = new HashMap<>();
 
-            util.scanControllers(routes, UrlMapping.class, controllers);
+            util.scanControllersInPackage(packageName, routes, Controller.class, UrlMapping.class);
 
-            context.setAttribute("controllers", controllers);
             context.setAttribute("routes", routes);
         } catch (Exception e) {
             throw new RuntimeException(e);

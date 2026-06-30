@@ -27,7 +27,6 @@ public class FrontControllerServlet extends HttpServlet {
 
     public void init(){
         util = new Utilitaire();
-        controllers = (List<Class<?>>) getServletContext().getAttribute("controllers");
         routes = (Map<UrlMethod, RouteMapping>) getServletContext().getAttribute("routes");
         /* Raha tsy hampiasa listener sinon any ambany */
 //        Utilitaire util = new Utilitaire();
@@ -61,24 +60,8 @@ public class FrontControllerServlet extends HttpServlet {
     }
 
     private void processRequest(HttpServletResponse res, String url, String method) throws IOException {
-
-        List<String> validUrl = util.getExistingLink(controllers, UrlMapping.class);
-
-        if(!util.isUrlValid(url, validUrl)){
-            StringJoiner sj = new StringJoiner(", ");
-            for(String s: validUrl){
-                sj.add(s);
-            }
-            throw new RuntimeException("L'url que vours avez entré: "+url+" n'est pas valide\n"+"Les url valident sont : "+ sj);
-        }
-
 //        res.setContentType("text/html");
         PrintWriter out = res.getWriter();
-//        Map<String, List<Method>> methodAssocieUrl = util.getMethodWithUrl(url, UrlMapping.class, controllers);
-//        Map<String, RouteMapping> methodUrl = util.getMethodAssocieUrl(url, UrlMapping.class, controllers);
-
-//        Map<UrlMethod, RouteMapping> routes = util.getMethods(url, UrlMapping.class, controllers);
-
         UrlMethod um = new UrlMethod(url, method);
 
         RouteMapping routeMapping = util.getByUrlMethod(um, routes);

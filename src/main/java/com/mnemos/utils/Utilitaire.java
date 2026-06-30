@@ -132,12 +132,10 @@ public class Utilitaire {
         return methodAndClass;
     }
 
-    public Map<UrlMethod, RouteMapping> getMethods(Class<? extends Annotation> annotation, List<Class<?>> controllers){
+    public void scanControllers(Map<UrlMethod, RouteMapping> routes, Class<? extends Annotation> annotation, List<Class<?>> controllers){
         if(!annotation.isAssignableFrom(UrlMapping.class)){
             throw new RuntimeException("Invalid annotation type");
         }
-
-        Map<UrlMethod, RouteMapping> routes = new HashMap<>();
 
         for(Class<?> controller: controllers){
             Method[] methods = controller.getMethods();
@@ -156,8 +154,6 @@ public class Utilitaire {
                 }
             }
         }
-
-        return routes;
     }
 
     public Map<UrlMethod, RouteMapping> getMethods(String url, Class<? extends Annotation> annotation, List<Class<?>> controllers){

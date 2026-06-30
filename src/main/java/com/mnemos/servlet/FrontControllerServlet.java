@@ -88,6 +88,9 @@ public class FrontControllerServlet extends HttpServlet {
         out.println("Nom de la classe : " + routeMapping.getController().getSimpleName());
 
         out.println("Méthode : " + routeMapping.getMethod().getName());
+        out.println("Type de retour methode: "+routeMapping.getMethod().getReturnType().getSimpleName());
+        Object invocationResult = util.invoke(routeMapping);
+        out.println("Result invocation methode: "+invocationResult);
 
 
 //        for(Map.Entry<UrlMethod, RouteMapping> entry: routes.entrySet()){

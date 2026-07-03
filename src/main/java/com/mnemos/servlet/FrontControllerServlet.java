@@ -5,6 +5,7 @@ import com.mnemos.annotation.UrlMapping;
 import com.mnemos.utils.RouteMapping;
 import com.mnemos.utils.UrlMethod;
 import com.mnemos.utils.Utilitaire;
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,11 +24,15 @@ public class FrontControllerServlet extends HttpServlet {
     private Utilitaire util;
     private List<Class<?>> controllers;
     private Map<UrlMethod, RouteMapping> routes;
+    private String suffix;
+    private String prefix;
 
 
     public void init(){
         util = new Utilitaire();
         routes = (Map<UrlMethod, RouteMapping>) getServletContext().getAttribute("routes");
+        prefix = getServletContext().getAttribute("prefix").toString();
+        suffix = getServletContext().getAttribute("suffix").toString();
         /* Raha tsy hampiasa listener sinon any ambany */
 //        Utilitaire util = new Utilitaire();
 //        String packageName = getInitParameter("packageController");
@@ -44,10 +49,10 @@ public class FrontControllerServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String projectPath = req.getContextPath();
-        String URL = req.getRequestURI();
+        String URI = req.getRequestURI();
         String method = req.getMethod();
-        URL = URL.substring(projectPath.length());
-        processRequest(resp, URL, method);
+        String URL = URI.substring(projectPath.length());
+        processRequest(req, resp, URL, method);
     }
 
     @Override
@@ -56,24 +61,35 @@ public class FrontControllerServlet extends HttpServlet {
         String URL = req.getRequestURI();
         String method = req.getMethod();
         URL = URL.substring(projectPath.length());
-        processRequest(resp, URL, method);
+        processRequest(req, resp, URL, method);
     }
 
-    private void processRequest(HttpServletResponse res, String url, String method) throws IOException {
-//        res.setContentType("text/html");
-        PrintWriter out = res.getWriter();
+    private void processRequest(HttpServletRequest req, HttpServletResponse res, String url, String method) throws IOException, ServletException {
         UrlMethod um = new UrlMethod(url, method);
-
         RouteMapping routeMapping = util.getByUrlMethod(um, routes);
+        if(req.getMethod().equals("GET")){
+            Object objectView = null;
+            if((objectView = util.invoke(routeMapping)) instanceof ModelAndView){
+                ModelAndView modelAndView = (ModelAndView) objectView;
+                Map<String, Object> attributes = modelAndView.getListAttributes();
+                String view = prefix+modelAndView.getUrl()+suffix;  
+                for(Map.Entry<String, Object> entry: attributes.entrySet()){
+                    req.setAttribute(entry.getKey(), entry.getValue());
+                }
+                RequestDispatcher dispatcher = req.getRequestDispatcher(view);
+                dispatcher.forward(req, res);
+            }
+        }
+    }
 
 
-        out.println("Controller : " + routeMapping.getController().getName());
-        out.println("Nom de la classe : " + routeMapping.getController().getSimpleName());
-
-        out.println("Méthode : " + routeMapping.getMethod().getName());
-        out.println("Type de retour methode: "+routeMapping.getMethod().getReturnType().getSimpleName());
-        Object invocationResult = util.invoke(routeMapping);
-        out.println("Result invocation methode: "+invocationResult);
+//        out.println("Controller : " + routeMapping.getController().getName());
+//        out.println("Nom de la classe : " + routeMapping.getController().getSimpleName());
+//
+//        out.println("Méthode : " + routeMapping.getMethod().getName());
+//        out.println("Type de retour methode: "+routeMapping.getMethod().getReturnType().getSimpleName());
+//        Object invocationResult = util.invoke(routeMapping);
+//        out.println("Result invocation methode: "+invocationResult);
 
 
 //        for(Map.Entry<UrlMethod, RouteMapping> entry: routes.entrySet()){
@@ -110,5 +126,4 @@ public class FrontControllerServlet extends HttpServlet {
 //                out.println("\t"+m.getName());
 //            }
 //        }
-    }
 }

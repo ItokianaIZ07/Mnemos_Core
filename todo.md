@@ -38,3 +38,19 @@ Prérequis
 
 ## Instruction Sprint 3:
 - Executer la méthode associé au lien
+
+## Instruction Sprint 4:
+- Intégration du ContextListener
+- Optmisation scanne du package
+
+## Instruction Sprint 5:
+- Passer des données dans un view(comment ?)
+    * Ajouter des attributs prefix et suffix dans le web.xml pour le prefix et suffix du view
+    * Création d'une classe ModelAndView:
+        - Attribut:
+            * Map<String, Object> attributes
+            * url(pour le view) 
+        - méthode setAttribut(String, Object)
+        - méthode setUrl(String)
+    * La méthode du controller doit retourner un ModelAndView 
+    * On invoque la méthode du controller et on récupère le ModelAndView pour ajouter les attributs dans la request et faire un forward vers le view

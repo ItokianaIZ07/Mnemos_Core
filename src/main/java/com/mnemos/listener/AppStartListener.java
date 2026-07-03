@@ -10,27 +10,28 @@ import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @WebListener
 public class AppStartListener implements ServletContextListener {
-    public void contextInitialized(ServletContextEvent sce) {
-        ServletContext context = sce.getServletContext();
+    public void contextInitialized(ServletContextEvent contextEvent) {
+        ServletContext context = contextEvent.getServletContext();
         Utilitaire util = new Utilitaire();
         String packageName = context.getInitParameter("packageController");
         try {
 //            List<String> controllers = util.getListController(packageName, Controller.class);
-            List<Class<?>> controllers = util.getListControllerClass(packageName, Controller.class);
-            Map<UrlMethod, RouteMapping> routes = util.getMethods(UrlMapping.class, controllers);
+            Map<UrlMethod, RouteMapping> routes = new HashMap<>();
 
-            context.setAttribute("controllers", controllers);
+            util.scanControllersInPackage(packageName, routes, Controller.class, UrlMapping.class);
+
             context.setAttribute("routes", routes);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void contextDestroyed(ServletContextEvent sce) {
+    public void contextDestroyed(ServletContextEvent contextEvent) {
     }
 }

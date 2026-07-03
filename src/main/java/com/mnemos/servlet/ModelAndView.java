@@ -19,4 +19,12 @@ public class ModelAndView {
     public Object getAttribute(String key){
         return attributes.get(key);
     }
+
+    public Map<String, Object> getListAttributes(){
+        return this.attributes;
+    }
+
+    public String getUrl(){
+        return this.url;
+    }
 }

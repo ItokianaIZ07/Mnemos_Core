@@ -20,6 +20,8 @@ public class AppStartListener implements ServletContextListener {
         ServletContext context = contextEvent.getServletContext();
         Utilitaire util = new Utilitaire();
         String packageName = context.getInitParameter("packageController");
+        String prefix = context.getInitParameter("prefix");
+        String suffix = context.getInitParameter("suffix");
         try {
 //            List<String> controllers = util.getListController(packageName, Controller.class);
             Map<UrlMethod, RouteMapping> routes = new HashMap<>();
@@ -27,6 +29,8 @@ public class AppStartListener implements ServletContextListener {
             util.scanControllersInPackage(packageName, routes, Controller.class, UrlMapping.class);
 
             context.setAttribute("routes", routes);
+            context.setAttribute("prefix", prefix);
+            context.setAttribute("suffix", suffix);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

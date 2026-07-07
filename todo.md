@@ -54,3 +54,6 @@ Prérequis
         - méthode setUrl(String)
     * La méthode du controller doit retourner un ModelAndView 
     * On invoque la méthode du controller et on récupère le ModelAndView pour ajouter les attributs dans la request et faire un forward vers le view
+
+## Sprint-5bis
+- Intégrer JPA et base de données

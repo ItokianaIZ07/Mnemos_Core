@@ -3,19 +3,19 @@ package com.mnemos.utils;
 import java.lang.reflect.Method;
 
 public class RouteMapping {
-    private Class<?> controller;
+    private Object controller;
     private Method method;
 
-    public RouteMapping(Class<?> controller, Method method) {
+    public RouteMapping(Object controller, Method method) {
         this.controller = controller;
         this.method = method;
     }
 
-    public Class<?> getController() {
+    public Object getController() {
         return controller;
     }
 
-    public void setController(Class<?> controller) {
+    public void setController(Object controller) {
         this.controller = controller;
     }
 

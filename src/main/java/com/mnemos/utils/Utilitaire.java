@@ -48,7 +48,7 @@ public class Utilitaire {
         return classes;
     }
 
-    public void scanControllersInPackage(String packageName, Map<UrlMethod, RouteMapping> routes, Class<? extends Annotation> annotationController, Class<? extends Annotation> annotationMethod) throws IOException, ClassNotFoundException {
+    public void scanControllersInPackage(String packageName, Map<UrlMethod, RouteMapping> routes, Class<? extends Annotation> annotationController, Class<? extends Annotation> annotationMethod) throws IOException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         scanPackage(packageName);
 
         for(Class<?> c: listController){
@@ -58,7 +58,7 @@ public class Utilitaire {
         }
     }
 
-    public void scanMethod(Map<UrlMethod, RouteMapping> routes, Class<?> controller, Class<? extends Annotation> annotation){
+    public void scanMethod(Map<UrlMethod, RouteMapping> routes, Class<?> controller, Class<? extends Annotation> annotation) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         if(!annotation.isAssignableFrom(UrlMapping.class)){
             throw new RuntimeException("Invalid annotation type");
         }
@@ -69,7 +69,7 @@ public class Utilitaire {
                 String link = urlMapping.url();
                 String requestMethod = urlMapping.method();
                 UrlMethod um = new UrlMethod(link, requestMethod);
-                RouteMapping route = new RouteMapping(controller, method);
+                RouteMapping route = new RouteMapping(controller.getConstructor().newInstance(), method);
 
                 if(routes.containsKey(um)){
                     throw new RuntimeException("L'url "+link+" est déjà utiliser dans "+routes.get(um).getMethod().getName());
@@ -81,12 +81,11 @@ public class Utilitaire {
 
     public Object invoke(RouteMapping routeMapping)  {
         try{
-            Class<?> controller = routeMapping.getController();
-            Object o = controller.getConstructor().newInstance();
+            Object controller = routeMapping.getController();
             Method method = routeMapping.getMethod();
 
-            return method.invoke(o);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | InstantiationException e) {
+            return method.invoke(controller);
+        } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }
@@ -99,7 +98,7 @@ public class Utilitaire {
             String url = entry.getKey().getUrl();
             String httpMethod = entry.getKey().getMethod();
             String methodName = entry.getValue().getMethod().getName();
-            String controllerName = entry.getValue().getController().getSimpleName();
+            String controllerName = entry.getValue().getController().getClass().getSimpleName();
 
             message.append("URL: ")
                     .append(url)

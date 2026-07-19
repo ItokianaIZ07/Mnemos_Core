@@ -1,4 +1,4 @@
-## Instruction Sprint 0:
+# Instruction Sprint 0:
 - Création d'un servlet: FrontControllerServlet
 - doGet
 - doPost
@@ -56,4 +56,14 @@ Prérequis
     * On invoque la méthode du controller et on récupère le ModelAndView pour ajouter les attributs dans la request et faire un forward vers le view
 
 ## Sprint-5bis
-- Intégrer JPA et base de données
+- Intégrer base de données
+- Combiner le frameword avec les couches services,repository de Spring
+- **Réflection**:
+  - Comment gérer la cycle de vie de Spring et du Framework
+  - COmment éviter l'instanciation d'un conteneur à chaque appel du controller
+  - Le programme doit être un singleton au lieu d'un prototype
+  - Il faut prendre le contexte de l'application Spring, en l'initialisant dans un listener
+  - Passer le contexte comme argument d'une méthode à invoquer
+  - **à rechercher**:
+    - comment instancier le contexte du spring
+    - ajouter du listener dans le web.xml

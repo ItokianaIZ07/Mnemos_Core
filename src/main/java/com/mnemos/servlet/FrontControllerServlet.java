@@ -2,6 +2,7 @@ package com.mnemos.servlet;
 
 import com.mnemos.annotation.Controller;
 import com.mnemos.annotation.UrlMapping;
+import com.mnemos.context.SpringContext;
 import com.mnemos.utils.RouteMapping;
 import com.mnemos.utils.UrlMethod;
 import com.mnemos.utils.Utilitaire;
@@ -26,6 +27,7 @@ public class FrontControllerServlet extends HttpServlet {
     private Map<UrlMethod, RouteMapping> routes;
     private String suffix;
     private String prefix;
+    private SpringContext context;
 
 
     public void init(){
@@ -33,6 +35,7 @@ public class FrontControllerServlet extends HttpServlet {
         routes = (Map<UrlMethod, RouteMapping>) getServletContext().getAttribute("routes");
         prefix = getServletContext().getAttribute("prefix").toString();
         suffix = getServletContext().getAttribute("suffix").toString();
+        context = (SpringContext) getServletContext().getAttribute("springContext");
         /* Raha tsy hampiasa listener sinon any ambany */
 //        Utilitaire util = new Utilitaire();
 //        String packageName = getInitParameter("packageController");
@@ -68,14 +71,12 @@ public class FrontControllerServlet extends HttpServlet {
         UrlMethod um = new UrlMethod(url, method);
         RouteMapping routeMapping = util.getByUrlMethod(um, routes);
         if(req.getMethod().equals("GET")){
-            Object objectView = null;
-            if((objectView = util.invoke(routeMapping)) instanceof ModelAndView){
+            Object objectView;
+            if((objectView = util.invoke(routeMapping, context)) instanceof ModelAndView){
                 ModelAndView modelAndView = (ModelAndView) objectView;
                 Map<String, Object> attributes = modelAndView.getListAttributes();
                 String view = prefix+modelAndView.getUrl()+suffix;  
-                for(Map.Entry<String, Object> entry: attributes.entrySet()){
-                    req.setAttribute(entry.getKey(), entry.getValue());
-                }
+                util.setRequestAttributes(req, attributes);
                 RequestDispatcher dispatcher = req.getRequestDispatcher(view);
                 dispatcher.forward(req, res);
             }

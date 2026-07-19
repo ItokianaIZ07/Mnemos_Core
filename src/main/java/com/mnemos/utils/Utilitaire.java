@@ -1,11 +1,15 @@
 package com.mnemos.utils;
 
 import com.mnemos.annotation.UrlMapping;
+import com.mnemos.context.SpringContext;
 import com.mnemos.exception.UrlNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -48,7 +52,7 @@ public class Utilitaire {
         return classes;
     }
 
-    public void scanControllersInPackage(String packageName, Map<UrlMethod, RouteMapping> routes, Class<? extends Annotation> annotationController, Class<? extends Annotation> annotationMethod) throws IOException, ClassNotFoundException {
+    public void scanControllersInPackage(String packageName, Map<UrlMethod, RouteMapping> routes, Class<? extends Annotation> annotationController, Class<? extends Annotation> annotationMethod) throws IOException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         scanPackage(packageName);
 
         for(Class<?> c: listController){
@@ -58,7 +62,7 @@ public class Utilitaire {
         }
     }
 
-    public void scanMethod(Map<UrlMethod, RouteMapping> routes, Class<?> controller, Class<? extends Annotation> annotation){
+    public void scanMethod(Map<UrlMethod, RouteMapping> routes, Class<?> controller, Class<? extends Annotation> annotation) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         if(!annotation.isAssignableFrom(UrlMapping.class)){
             throw new RuntimeException("Invalid annotation type");
         }
@@ -69,7 +73,7 @@ public class Utilitaire {
                 String link = urlMapping.url();
                 String requestMethod = urlMapping.method();
                 UrlMethod um = new UrlMethod(link, requestMethod);
-                RouteMapping route = new RouteMapping(controller, method);
+                RouteMapping route = new RouteMapping(controller.getConstructor().newInstance(), method);
 
                 if(routes.containsKey(um)){
                     throw new RuntimeException("L'url "+link+" est déjà utiliser dans "+routes.get(um).getMethod().getName());
@@ -79,15 +83,26 @@ public class Utilitaire {
         }
     }
 
-    public Object invoke(RouteMapping routeMapping)  {
+    public Object invoke(RouteMapping routeMapping, SpringContext context)  {
         try{
-            Class<?> controller = routeMapping.getController();
-            Object o = controller.getConstructor().newInstance();
+            Object controller = routeMapping.getController();
             Method method = routeMapping.getMethod();
+            setFieldsValue(controller, context);
 
-            return method.invoke(o);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | InstantiationException e) {
+            return method.invoke(controller);
+        } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public void setFieldsValue(Object controller, SpringContext context) throws IllegalAccessException {
+        for(Field field: controller.getClass().getDeclaredFields()){
+            Class<?> type = field.getType();
+            if(type.isAnnotationPresent(Service.class)){
+                Object service = context.getBean(type);
+                field.setAccessible(true);
+                field.set(controller, service);
+            }
         }
     }
 
@@ -99,7 +114,7 @@ public class Utilitaire {
             String url = entry.getKey().getUrl();
             String httpMethod = entry.getKey().getMethod();
             String methodName = entry.getValue().getMethod().getName();
-            String controllerName = entry.getValue().getController().getSimpleName();
+            String controllerName = entry.getValue().getController().getClass().getSimpleName();
 
             message.append("URL: ")
                     .append(url)
@@ -115,5 +130,11 @@ public class Utilitaire {
             throw new UrlNotFoundException(message.toString());
         }
         return route;
+    }
+
+    public void setRequestAttributes(HttpServletRequest req, Map<String, Object> attributes){
+        for(Map.Entry<String, Object> entry: attributes.entrySet()){
+            req.setAttribute(entry.getKey(), entry.getValue());
+        }
     }
 }

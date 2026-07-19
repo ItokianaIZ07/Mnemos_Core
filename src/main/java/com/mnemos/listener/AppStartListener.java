@@ -2,6 +2,7 @@ package com.mnemos.listener;
 
 import com.mnemos.annotation.Controller;
 import com.mnemos.annotation.UrlMapping;
+import com.mnemos.context.SpringContext;
 import com.mnemos.utils.RouteMapping;
 import com.mnemos.utils.UrlMethod;
 import com.mnemos.utils.Utilitaire;
@@ -9,6 +10,8 @@ import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +21,8 @@ import java.util.Map;
 public class AppStartListener implements ServletContextListener {
     public void contextInitialized(ServletContextEvent contextEvent) {
         ServletContext context = contextEvent.getServletContext();
+        WebApplicationContext webContext = WebApplicationContextUtils.getRequiredWebApplicationContext(context);
+        SpringContext springContext = new SpringContext(webContext);
         Utilitaire util = new Utilitaire();
         String packageName = context.getInitParameter("packageController");
         String prefix = context.getInitParameter("prefix");
@@ -31,6 +36,7 @@ public class AppStartListener implements ServletContextListener {
             context.setAttribute("routes", routes);
             context.setAttribute("prefix", prefix);
             context.setAttribute("suffix", suffix);
+            context.setAttribute("springContext", springContext);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

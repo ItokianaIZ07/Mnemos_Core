@@ -1,11 +1,15 @@
 package com.mnemos.utils;
 
 import com.mnemos.annotation.UrlMapping;
+import com.mnemos.context.SpringContext;
 import com.mnemos.exception.UrlNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -79,14 +83,26 @@ public class Utilitaire {
         }
     }
 
-    public Object invoke(RouteMapping routeMapping)  {
+    public Object invoke(RouteMapping routeMapping, SpringContext context)  {
         try{
             Object controller = routeMapping.getController();
             Method method = routeMapping.getMethod();
+            setFieldsValue(controller, context);
 
             return method.invoke(controller);
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public void setFieldsValue(Object controller, SpringContext context) throws IllegalAccessException {
+        for(Field field: controller.getClass().getDeclaredFields()){
+            Class<?> type = field.getType();
+            if(type.isAnnotationPresent(Service.class)){
+                Object service = context.getBean(type);
+                field.setAccessible(true);
+                field.set(controller, service);
+            }
         }
     }
 
@@ -114,5 +130,11 @@ public class Utilitaire {
             throw new UrlNotFoundException(message.toString());
         }
         return route;
+    }
+
+    public void setRequestAttributes(HttpServletRequest req, Map<String, Object> attributes){
+        for(Map.Entry<String, Object> entry: attributes.entrySet()){
+            req.setAttribute(entry.getKey(), entry.getValue());
+        }
     }
 }

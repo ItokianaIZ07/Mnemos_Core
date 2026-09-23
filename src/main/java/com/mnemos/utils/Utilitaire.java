@@ -1,5 +1,6 @@
 package com.mnemos.utils;
 
+import com.mnemos.annotation.WebAPI;
 import com.mnemos.annotation.UrlMapping;
 import com.mnemos.context.SpringContext;
 import com.mnemos.exception.UrlNotFoundException;
@@ -17,6 +18,7 @@ import java.util.*;
 
 public class Utilitaire {
     private List<Class<?>> listController;
+
     public void scanPackage(String packageName) throws IOException, ClassNotFoundException {
         listController = new ArrayList<>();
 
@@ -55,36 +57,36 @@ public class Utilitaire {
     public void scanControllersInPackage(String packageName, Map<UrlMethod, RouteMapping> routes, Class<? extends Annotation> annotationController, Class<? extends Annotation> annotationMethod) throws IOException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         scanPackage(packageName);
 
-        for(Class<?> c: listController){
-            if(c.isAnnotationPresent(annotationController)){
+        for (Class<?> c : listController) {
+            if (c.isAnnotationPresent(annotationController)) {
                 scanMethod(routes, c, annotationMethod);
             }
         }
     }
 
     public void scanMethod(Map<UrlMethod, RouteMapping> routes, Class<?> controller, Class<? extends Annotation> annotation) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        if(!annotation.isAssignableFrom(UrlMapping.class)){
+        if (!annotation.isAssignableFrom(UrlMapping.class)) {
             throw new RuntimeException("Invalid annotation type");
         }
         Method[] methods = controller.getMethods();
-        for(Method method: methods){
-            if(method.isAnnotationPresent(annotation)){
+        for (Method method : methods) {
+            if (method.isAnnotationPresent(annotation)) {
                 UrlMapping urlMapping = (UrlMapping) method.getAnnotation(annotation);
                 String link = urlMapping.url();
                 String requestMethod = urlMapping.method();
                 UrlMethod um = new UrlMethod(link, requestMethod);
                 RouteMapping route = new RouteMapping(controller.getConstructor().newInstance(), method);
 
-                if(routes.containsKey(um)){
-                    throw new RuntimeException("L'url "+link+" est déjà utiliser dans "+routes.get(um).getMethod().getName());
+                if (routes.containsKey(um)) {
+                    throw new RuntimeException("L'url " + link + " est déjà utiliser dans " + routes.get(um).getMethod().getName());
                 }
                 routes.put(um, route);
             }
         }
     }
 
-    public Object invoke(RouteMapping routeMapping, SpringContext context)  {
-        try{
+    public Object invoke(RouteMapping routeMapping, SpringContext context) {
+        try {
             Object controller = routeMapping.getController();
             Method method = routeMapping.getMethod();
             setFieldsValue(controller, context);
@@ -96,9 +98,9 @@ public class Utilitaire {
     }
 
     public void setFieldsValue(Object controller, SpringContext context) throws IllegalAccessException {
-        for(Field field: controller.getClass().getDeclaredFields()){
+        for (Field field : controller.getClass().getDeclaredFields()) {
             Class<?> type = field.getType();
-            if(type.isAnnotationPresent(Service.class)){
+            if (type.isAnnotationPresent(Service.class)) {
                 Object service = context.getBean(type);
                 field.setAccessible(true);
                 field.set(controller, service);
@@ -108,7 +110,7 @@ public class Utilitaire {
 
     public RouteMapping getByUrlMethod(UrlMethod urlMethod, Map<UrlMethod, RouteMapping> routes) {
         RouteMapping route = routes.get(urlMethod);
-        StringBuilder message = new StringBuilder("Aucune methode associer a l'url: "+urlMethod.getUrl()+"\n");
+        StringBuilder message = new StringBuilder("Aucune methode associer a l'url: " + urlMethod.getUrl() + "\n");
         for (Map.Entry<UrlMethod, RouteMapping> entry : routes.entrySet()) {
 
             String url = entry.getKey().getUrl();
@@ -126,15 +128,59 @@ public class Utilitaire {
                     .append(controllerName)
                     .append("\n");
         }
-        if(route == null){
+        if (route == null) {
             throw new UrlNotFoundException(message.toString());
         }
         return route;
     }
 
-    public void setRequestAttributes(HttpServletRequest req, Map<String, Object> attributes){
-        for(Map.Entry<String, Object> entry: attributes.entrySet()){
+    public void setRequestAttributes(HttpServletRequest req, Map<String, Object> attributes) {
+        for (Map.Entry<String, Object> entry : attributes.entrySet()) {
             req.setAttribute(entry.getKey(), entry.getValue());
         }
     }
+
+    public boolean isMethodResponseBody(Method method) {
+        return method.isAnnotationPresent(WebAPI.class);
+    }
+
+    public String toJSON(Object o) {
+        System.out.println("======================Tonga eto1==========================");
+        if(o instanceof String){
+            System.out.println("tonga ato2");
+            return o.toString();
+        }
+
+        System.out.println("======================Tonga eto3==========================");
+        Field[] fields = o.getClass().getDeclaredFields();
+        System.out.println(fields.length);
+        String json = "";
+        StringJoiner sj = new StringJoiner(",");
+
+        for (Field f : fields) {
+            System.out.println(f.getName());
+            try{
+                f.setAccessible(true);
+                Object value = f.get(o);
+                boolean isNumber = checkValue(value);
+                json += f.getName() + ":"+value;
+                sj.add("\""+f.getName() + "\""+":" + (checkValue(value) ? value : "\""+value+"\""));
+            }catch (Exception e){
+                throw new RuntimeException("nisy erreur b: \n"+e);
+            }
+        }
+        if(sj.length() != 0){
+            json = "{"+ sj +"}";
+        }
+
+        return json;
+    }
+
+    private boolean checkValue(Object value){
+        if(value instanceof Number){
+            return true;
+        }
+        return false;
+    }
+
 }

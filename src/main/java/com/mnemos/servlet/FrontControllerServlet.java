@@ -71,14 +71,28 @@ public class FrontControllerServlet extends HttpServlet {
         UrlMethod um = new UrlMethod(url, method);
         RouteMapping routeMapping = util.getByUrlMethod(um, routes);
         if(req.getMethod().equals("GET")){
-            Object objectView;
-            if((objectView = util.invoke(routeMapping, context)) instanceof ModelAndView){
+            Object objectView = util.invoke(routeMapping, context);
+            if(objectView instanceof ModelAndView){
                 ModelAndView modelAndView = (ModelAndView) objectView;
                 Map<String, Object> attributes = modelAndView.getListAttributes();
                 String view = prefix+modelAndView.getUrl()+suffix;  
                 util.setRequestAttributes(req, attributes);
                 RequestDispatcher dispatcher = req.getRequestDispatcher(view);
                 dispatcher.forward(req, res);
+            }else if(util.isMethodResponseBody(routeMapping.getMethod())){
+                String response = util.toJSON(objectView);
+
+                PrintWriter out = res.getWriter();
+
+                res.setContentType("application/json");
+
+                out.print(response);
+
+                out.flush();
+            }else{
+                PrintWriter out = res.getWriter();
+
+                out.print("TEST");
             }
         }
     }

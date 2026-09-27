@@ -1,5 +1,7 @@
 package com.mnemos.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mnemos.annotation.WebAPI;
 import com.mnemos.annotation.UrlMapping;
 import com.mnemos.context.SpringContext;
@@ -145,33 +147,42 @@ public class Utilitaire {
     }
 
     public String toJSON(Object o) {
-        System.out.println("======================Tonga eto1==========================");
         if(o instanceof String){
-            System.out.println("tonga ato2");
             return o.toString();
         }
 
-        System.out.println("======================Tonga eto3==========================");
-        Field[] fields = o.getClass().getDeclaredFields();
-        System.out.println(fields.length);
-        String json = "";
-        StringJoiner sj = new StringJoiner(",");
+        ObjectMapper mapper = new ObjectMapper();
 
-        for (Field f : fields) {
-            System.out.println(f.getName());
-            try{
-                f.setAccessible(true);
-                Object value = f.get(o);
-                boolean isNumber = checkValue(value);
-                json += f.getName() + ":"+value;
-                sj.add("\""+f.getName() + "\""+":" + (checkValue(value) ? value : "\""+value+"\""));
-            }catch (Exception e){
-                throw new RuntimeException("nisy erreur b: \n"+e);
-            }
+        String json = "";
+
+        try{
+            json = mapper
+                .writerWithDefaultPrettyPrinter()
+                .writeValueAsString(o);
+        }catch (JsonProcessingException e){
+            throw new RuntimeException("Une erreur est survenue lors de la formatage en json: "+e);
         }
-        if(sj.length() != 0){
-            json = "{"+ sj +"}";
-        }
+
+//        Field[] fields = o.getClass().getDeclaredFields();
+//        System.out.println(fields.length);
+//        String json = "";
+//        StringJoiner sj = new StringJoiner(",");
+//
+//        for (Field f : fields) {
+//            System.out.println(f.getName());
+//            try{
+//                f.setAccessible(true);
+//                Object value = f.get(o);
+//                boolean isNumber = checkValue(value);
+//                json += f.getName() + ":"+value;
+//                sj.add("\""+f.getName() + "\""+":" + (isNumber ? value : "\""+value+"\""));
+//            }catch (Exception e){
+//                throw new RuntimeException("nisy erreur b: \n"+e);
+//            }
+//        }
+//        if(sj.length() != 0){
+//            json = "{"+ sj +"}";
+//        }
 
         return json;
     }

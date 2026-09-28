@@ -67,3 +67,14 @@ Prérequis
   - **à rechercher**:
     - comment instancier le contexte du spring
     - ajouter du listener dans le web.xml
+
+## Sprint-6
+- Configurer API REST pour le framework
+  - Le framework est capable de retourner un JSON
+
+```
+    à suivre:
+
+    - upload de fichier
+    - gestion de session
+```

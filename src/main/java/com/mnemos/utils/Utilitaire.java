@@ -2,6 +2,7 @@ package com.mnemos.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mnemos.annotation.Param;
 import com.mnemos.annotation.WebAPI;
 import com.mnemos.annotation.UrlMapping;
 import com.mnemos.context.SpringContext;
@@ -15,6 +16,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.net.URL;
 import java.util.*;
 
@@ -87,13 +89,13 @@ public class Utilitaire {
         }
     }
 
-    public Object invoke(RouteMapping routeMapping, SpringContext context) {
+    public Object invoke(RouteMapping routeMapping, SpringContext context, Object... args) {
         try {
             Object controller = routeMapping.getController();
             Method method = routeMapping.getMethod();
             setFieldsValue(controller, context);
 
-            return method.invoke(controller);
+            return method.invoke(controller, args);
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
@@ -142,7 +144,7 @@ public class Utilitaire {
         }
     }
 
-    public boolean isMethodResponseBody(Method method) {
+    public boolean isMethodReturnJSON(Method method) {
         return method.isAnnotationPresent(WebAPI.class);
     }
 
@@ -185,6 +187,70 @@ public class Utilitaire {
 //        }
 
         return json;
+    }
+
+    public Object[] getRequestArguments(HttpServletRequest req, RouteMapping routeMapping){
+        Enumeration<String> parameterNames = req.getParameterNames();
+        Parameter[] parameters = getMethodParameter(routeMapping.getMethod());
+
+        List<Object> argsValue = new ArrayList<>();
+        while(parameterNames.hasMoreElements()){
+            String paramName = parameterNames.nextElement();
+            String paramValue = req.getParameter(paramName);
+            for(Parameter p: parameters){
+                String parameter = getParameterName(p);
+                if(parameter.equals(paramName)){
+                    Object value = dynamicCast(paramValue, p.getType());
+                    argsValue.add(value);
+                }
+            }
+        }
+        return !argsValue.isEmpty() ? argsValue.toArray() : null;
+    }
+
+    public String getParameterName(Parameter parameter){
+        if(parameter.isAnnotationPresent(Param.class)){
+            return parameter.getAnnotation(Param.class).value();
+        }
+
+        throw new RuntimeException("Les paramètres des méthodes du controller doivent être annoté avec @Param");
+    }
+
+    public Parameter[] getMethodParameter(Method method){
+        return method.getParameters();
+    }
+
+    public Object dynamicCast(String value, Class<?> targetType){
+            if (value == null) {
+                if (targetType == int.class) return 0;
+                if (targetType == boolean.class) return false;
+                if (targetType == double.class) return 0.0;
+                return null;
+            }
+
+            if (targetType == int.class || targetType == Integer.class) {
+                return Integer.parseInt(value.trim());
+            }
+            if (targetType == boolean.class || targetType == Boolean.class) {
+                return Boolean.parseBoolean(value.trim());
+            }
+            if (targetType == double.class || targetType == Double.class) {
+                return Double.parseDouble(value.trim());
+            }
+            if (targetType == long.class || targetType == Long.class) {
+                return Long.parseLong(value.trim());
+            }
+
+            if (targetType == String.class) {
+                return value;
+            }
+
+            try {
+                return targetType.cast(value);
+            } catch (ClassCastException e) {
+                throw new IllegalArgumentException("Impossible de convertir '" + value + "' vers " + targetType.getName());
+            }
+
     }
 
     private boolean checkValue(Object value){

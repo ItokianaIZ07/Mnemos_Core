@@ -190,21 +190,35 @@ public class Utilitaire {
     }
 
     public Object[] getRequestArguments(HttpServletRequest req, RouteMapping routeMapping){
-        Enumeration<String> parameterNames = req.getParameterNames();
+        /*
+        * Donnée attendu param=value&param=value(application/x-www-form-urlencoded) et non JSON
+        * */
+
+//        Enumeration<String> parameterNames = req.getParameterNames();
         Parameter[] parameters = getMethodParameter(routeMapping.getMethod());
 
         List<Object> argsValue = new ArrayList<>();
-        while(parameterNames.hasMoreElements()){
-            String paramName = parameterNames.nextElement();
-            String paramValue = req.getParameter(paramName);
-            for(Parameter p: parameters){
-                String parameter = getParameterName(p);
-                if(parameter.equals(paramName)){
-                    Object value = dynamicCast(paramValue, p.getType());
-                    argsValue.add(value);
-                }
+        for(Parameter p: parameters){
+            String parameterName = getParameterName(p);
+            String paramValue = req.getParameter(parameterName);
+            if(paramValue == null){
+                throw new IllegalArgumentException("Le paramètre "+parameterName+" est obligatoire");
             }
+            Object value = dynamicCast(paramValue, p.getType());
+            argsValue.add(value);
         }
+//        tsy nampiasaina satria lasa tsy mifanaraka ny ordre anle paramètre
+//        while(parameterNames.hasMoreElements()){
+//            String paramName = parameterNames.nextElement();
+//            String paramValue = req.getParameter(paramName);
+//            for(Parameter p: parameters){
+//                String parameter = getParameterName(p);
+//                if(parameter.equals(paramName)){
+//                    Object value = dynamicCast(paramValue, p.getType());
+//                    argsValue.add(value);
+//                }
+//            }
+//        }
         return !argsValue.isEmpty() ? argsValue.toArray() : null;
     }
 
@@ -220,37 +234,67 @@ public class Utilitaire {
         return method.getParameters();
     }
 
-    public Object dynamicCast(String value, Class<?> targetType){
-            if (value == null) {
-                if (targetType == int.class) return 0;
-                if (targetType == boolean.class) return false;
-                if (targetType == double.class) return 0.0;
-                return null;
-            }
+    public Object dynamicCast(String value, Class<?> targetType) {
 
-            if (targetType == int.class || targetType == Integer.class) {
-                return Integer.parseInt(value.trim());
-            }
-            if (targetType == boolean.class || targetType == Boolean.class) {
-                return Boolean.parseBoolean(value.trim());
-            }
-            if (targetType == double.class || targetType == Double.class) {
-                return Double.parseDouble(value.trim());
-            }
-            if (targetType == long.class || targetType == Long.class) {
-                return Long.parseLong(value.trim());
-            }
+        if (value == null) {
+            if (targetType == int.class) return 0;
+            if (targetType == boolean.class) return false;
+            if (targetType == double.class) return 0.0;
+            if (targetType == long.class) return 0L;
 
-            if (targetType == String.class) {
-                return value;
-            }
+            return null;
+        }
 
-            try {
-                return targetType.cast(value);
-            } catch (ClassCastException e) {
-                throw new IllegalArgumentException("Impossible de convertir '" + value + "' vers " + targetType.getName());
-            }
+        value = value.trim();
 
+        if (targetType == int.class || targetType == Integer.class) {
+            return Integer.parseInt(value);
+        }
+
+        if (targetType == long.class || targetType == Long.class) {
+            return Long.parseLong(value);
+        }
+
+        if (targetType == double.class || targetType == Double.class) {
+            return Double.parseDouble(value);
+        }
+
+        if (targetType == boolean.class || targetType == Boolean.class) {
+            return Boolean.parseBoolean(value);
+        }
+
+        if (targetType == String.class) {
+            return value;
+        }
+
+        if (targetType == java.time.LocalDate.class) {
+            return java.time.LocalDate.parse(value);
+        }
+
+        if (targetType == java.time.LocalDateTime.class) {
+            return java.time.LocalDateTime.parse(value);
+        }
+
+        if (targetType == java.sql.Date.class) {
+            return java.sql.Date.valueOf(
+                    java.time.LocalDate.parse(value)
+            );
+        }
+
+        if (targetType == java.util.Date.class) {
+            return java.sql.Timestamp.valueOf(
+                    java.time.LocalDateTime.parse(value)
+            );
+        }
+
+        try {
+            return targetType.cast(value);
+        } catch (ClassCastException e) {
+            throw new IllegalArgumentException(
+                    "Impossible de convertir '" + value +
+                            "' vers " + targetType.getName()
+            );
+        }
     }
 
     private boolean checkValue(Object value){

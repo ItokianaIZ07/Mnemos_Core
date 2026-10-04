@@ -69,6 +69,7 @@ Prérequis
     - ajouter du listener dans le web.xml
 
 ## Sprint-6
+
 - Configurer API REST pour le framework
   - Le framework est capable de retourner un JSON
 
@@ -78,3 +79,16 @@ Prérequis
     - upload de fichier
     - gestion de session
 ```
+
+## Sprint-7: binding
+
+- mandray paramètre le fonction ho invoquena d affichena ny valeur anle paramètre sinon null
+- ref azo ny fonction mifanaraka @le lien, d comparena ny nom anle paramètre @ny paramètre azonle requête avy any @vue
+
+ex: void save(String name, String firstName, int age)
+- d alaina ny paramètre rehetra azo avy @le requête d manao matching @le paramètre anle fonction izy vao invoquena le méthode
+- ``
+   namorona annotation mba hahafahana manana accès 
+   @nom anle paramètre anle fonction satria raha tsy compilé avec -parameters les 
+   classes d lasa arg1 arg0 ny argument any
+``

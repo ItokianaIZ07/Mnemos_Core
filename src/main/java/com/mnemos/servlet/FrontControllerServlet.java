@@ -1,7 +1,5 @@
 package com.mnemos.servlet;
 
-import com.mnemos.annotation.Controller;
-import com.mnemos.annotation.UrlMapping;
 import com.mnemos.context.SpringContext;
 import com.mnemos.utils.RouteMapping;
 import com.mnemos.utils.UrlMethod;
@@ -14,11 +12,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 
 public class FrontControllerServlet extends HttpServlet {
 
@@ -70,17 +65,18 @@ public class FrontControllerServlet extends HttpServlet {
     private void processRequest(HttpServletRequest req, HttpServletResponse res, String url, String method) throws IOException, ServletException {
         UrlMethod um = new UrlMethod(url, method);
         RouteMapping routeMapping = util.getByUrlMethod(um, routes);
-        if(req.getMethod().equals("GET")){
-            Object objectView = util.invoke(routeMapping, context);
-            if(objectView instanceof ModelAndView){
-                ModelAndView modelAndView = (ModelAndView) objectView;
+//        if(req.getMethod().equals("GET")){
+            Object[] requestArgs = util.getRequestArguments(req, routeMapping);
+            Object objectInvoked = util.invoke(routeMapping, context, requestArgs);
+            if(objectInvoked instanceof ModelAndView){
+                ModelAndView modelAndView = (ModelAndView) objectInvoked;
                 Map<String, Object> attributes = modelAndView.getListAttributes();
                 String view = prefix+modelAndView.getUrl()+suffix;  
                 util.setRequestAttributes(req, attributes);
                 RequestDispatcher dispatcher = req.getRequestDispatcher(view);
                 dispatcher.forward(req, res);
-            }else if(util.isMethodResponseBody(routeMapping.getMethod())){
-                String response = util.toJSON(objectView);
+            }else if(util.isMethodReturnJSON(routeMapping.getMethod())){
+                String response = util.toJSON(objectInvoked);
 
                 PrintWriter out = res.getWriter();
 
@@ -94,7 +90,7 @@ public class FrontControllerServlet extends HttpServlet {
 
                 out.print("TEST");
             }
-        }
+//        }
     }
 
 

@@ -33,15 +33,23 @@ public class UrlMethod {
         return str.toUpperCase();
     }
 
+    private String formatUrl(String url){
+        int index = url.indexOf('?');
+        return (index != -1) ? url.substring(0, index).trim() : url;
+    }
+
     @Override
     public boolean equals(Object object) {
         if (object == null || getClass() != object.getClass()) return false;
         UrlMethod urlMethod = (UrlMethod) object;
-        return Objects.equals(url, urlMethod.url) && Objects.equals(capitalize(method),capitalize(urlMethod.method));
+
+        String formatedUrl = formatUrl(url);
+        String formatedObjectUrl = formatUrl(urlMethod.url);
+        return Objects.equals(formatedUrl, formatedObjectUrl) && Objects.equals(capitalize(method),capitalize(urlMethod.method));
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(url, method);
+        return Objects.hash(formatUrl(url), capitalize(method));
     }
 }

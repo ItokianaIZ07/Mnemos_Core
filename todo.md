@@ -92,3 +92,6 @@ ex: void save(String name, String firstName, int age)
    @nom anle paramètre anle fonction satria raha tsy compilé avec -parameters les 
    classes d lasa arg1 arg0 ny argument any
 ``
+
+## Sprint-7-bis: binding object
+- mandray objet en paramètre les méthodes d manao matching anzay avant invoquation de la méthode

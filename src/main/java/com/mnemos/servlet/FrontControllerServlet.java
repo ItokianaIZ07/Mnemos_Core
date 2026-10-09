@@ -81,13 +81,7 @@ public class FrontControllerServlet extends HttpServlet {
             }else if(util.isMethodReturnJSON(routeMapping.getMethod())){
                 String response = util.toJSON(objectInvoked);
 
-                PrintWriter out = res.getWriter();
-
-                res.setContentType("application/json");
-
-                out.print(response);
-
-                out.flush();
+                util.sendResponse(res, response);
             }else{
                 PrintWriter out = res.getWriter();
 

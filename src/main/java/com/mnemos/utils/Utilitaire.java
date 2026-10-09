@@ -8,10 +8,12 @@ import com.mnemos.annotation.UrlMapping;
 import com.mnemos.context.SpringContext;
 import com.mnemos.exception.UrlNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -165,27 +167,6 @@ public class Utilitaire {
             throw new RuntimeException("Une erreur est survenue lors de la formatage en json: "+e);
         }
 
-//        Field[] fields = o.getClass().getDeclaredFields();
-//        System.out.println(fields.length);
-//        String json = "";
-//        StringJoiner sj = new StringJoiner(",");
-//
-//        for (Field f : fields) {
-//            System.out.println(f.getName());
-//            try{
-//                f.setAccessible(true);
-//                Object value = f.get(o);
-//                boolean isNumber = checkValue(value);
-//                json += f.getName() + ":"+value;
-//                sj.add("\""+f.getName() + "\""+":" + (isNumber ? value : "\""+value+"\""));
-//            }catch (Exception e){
-//                throw new RuntimeException("nisy erreur b: \n"+e);
-//            }
-//        }
-//        if(sj.length() != 0){
-//            json = "{"+ sj +"}";
-//        }
-
         return json;
     }
 
@@ -263,6 +244,29 @@ public class Utilitaire {
             );
         }
     }
+
+    public void sendResponse(HttpServletResponse response, String data) {
+        try {
+            PrintWriter out = response.getWriter();
+
+            String trimmedData = (data != null) ? data.trim() : "";
+
+            boolean isJson = (trimmedData.startsWith("{") && trimmedData.endsWith("}"))
+                    || (trimmedData.startsWith("[") && trimmedData.endsWith("]"));
+
+            if (isJson) {
+                response.setContentType("application/json; charset=UTF-8");
+            } else {
+                response.setContentType("text/plain; charset=UTF-8");
+            }
+
+            out.print(data);
+            out.flush();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to get writer", e);
+        }
+    }
+
 
     private boolean checkValue(Object value){
         if(value instanceof Number){

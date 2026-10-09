@@ -189,39 +189,6 @@ public class Utilitaire {
         return json;
     }
 
-    public Object[] getRequestArguments(HttpServletRequest req, RouteMapping routeMapping){
-        /*
-        * Donnée attendu param=value&param=value(application/x-www-form-urlencoded) et non JSON
-        * */
-
-//        Enumeration<String> parameterNames = req.getParameterNames();
-        Parameter[] parameters = getMethodParameter(routeMapping.getMethod());
-
-        List<Object> argsValue = new ArrayList<>();
-        for(Parameter p: parameters){
-            String parameterName = getParameterName(p);
-            String paramValue = req.getParameter(parameterName);
-            if(paramValue == null){
-                throw new IllegalArgumentException("Le paramètre "+parameterName+" est obligatoire");
-            }
-            Object value = dynamicCast(paramValue, p.getType());
-            argsValue.add(value);
-        }
-//        tsy nampiasaina satria lasa tsy mifanaraka ny ordre anle paramètre
-//        while(parameterNames.hasMoreElements()){
-//            String paramName = parameterNames.nextElement();
-//            String paramValue = req.getParameter(paramName);
-//            for(Parameter p: parameters){
-//                String parameter = getParameterName(p);
-//                if(parameter.equals(paramName)){
-//                    Object value = dynamicCast(paramValue, p.getType());
-//                    argsValue.add(value);
-//                }
-//            }
-//        }
-        return !argsValue.isEmpty() ? argsValue.toArray() : null;
-    }
-
     public String getParameterName(Parameter parameter){
         if(parameter.isAnnotationPresent(Param.class)){
             return parameter.getAnnotation(Param.class).value();

@@ -95,3 +95,6 @@ ex: void save(String name, String firstName, int age)
 
 ## Sprint-7-bis: binding object
 - mandray objet en paramètre les méthodes d manao matching anzay avant invoquation de la méthode
+- mila jerena ny cas hoe manana attribut:
+  - Objet le objet avy any @ formulaire
+  - List

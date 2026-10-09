@@ -1,6 +1,7 @@
 package com.mnemos.servlet;
 
 import com.mnemos.context.SpringContext;
+import com.mnemos.utils.DataBinder;
 import com.mnemos.utils.RouteMapping;
 import com.mnemos.utils.UrlMethod;
 import com.mnemos.utils.Utilitaire;
@@ -23,10 +24,12 @@ public class FrontControllerServlet extends HttpServlet {
     private String suffix;
     private String prefix;
     private SpringContext context;
+    private DataBinder dataBinder;
 
 
     public void init(){
         util = new Utilitaire();
+        dataBinder = new DataBinder(util);
         routes = (Map<UrlMethod, RouteMapping>) getServletContext().getAttribute("routes");
         prefix = getServletContext().getAttribute("prefix").toString();
         suffix = getServletContext().getAttribute("suffix").toString();
@@ -66,7 +69,7 @@ public class FrontControllerServlet extends HttpServlet {
         UrlMethod um = new UrlMethod(url, method);
         RouteMapping routeMapping = util.getByUrlMethod(um, routes);
 //        if(req.getMethod().equals("GET")){
-            Object[] requestArgs = util.getRequestArguments(req, routeMapping);
+            Object[] requestArgs = dataBinder.getRequestArguments(req, routeMapping);
             Object objectInvoked = util.invoke(routeMapping, context, requestArgs);
             if(objectInvoked instanceof ModelAndView){
                 ModelAndView modelAndView = (ModelAndView) objectInvoked;

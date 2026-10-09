@@ -24,6 +24,7 @@ import java.util.*;
 
 public class Utilitaire {
     private List<Class<?>> listController;
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public void scanPackage(String packageName) throws IOException, ClassNotFoundException {
         listController = new ArrayList<>();
@@ -249,10 +250,7 @@ public class Utilitaire {
         try {
             PrintWriter out = response.getWriter();
 
-            String trimmedData = (data != null) ? data.trim() : "";
-
-            boolean isJson = (trimmedData.startsWith("{") && trimmedData.endsWith("}"))
-                    || (trimmedData.startsWith("[") && trimmedData.endsWith("]"));
+            boolean isJson = isJson(data);
 
             if (isJson) {
                 response.setContentType("application/json; charset=UTF-8");
@@ -267,6 +265,17 @@ public class Utilitaire {
         }
     }
 
+    private boolean isJson(String data){
+        if (data != null && !data.isBlank()) {
+            try {
+                objectMapper.readTree(data);
+                return  true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
+    }
 
     private boolean checkValue(Object value){
         if(value instanceof Number){

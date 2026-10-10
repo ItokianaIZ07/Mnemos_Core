@@ -7,6 +7,7 @@ import com.mnemos.annotation.WebAPI;
 import com.mnemos.annotation.UrlMapping;
 import com.mnemos.context.SpringContext;
 import com.mnemos.exception.UrlNotFoundException;
+import com.mnemos.reflect.Reflect;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Service;
@@ -75,7 +76,8 @@ public class Utilitaire {
         if (!annotation.isAssignableFrom(UrlMapping.class)) {
             throw new RuntimeException("Invalid annotation type");
         }
-        Method[] methods = controller.getMethods();
+        Method[] methods = Reflect.getObjectMethods(controller);
+
         for (Method method : methods) {
             if (method.isAnnotationPresent(annotation)) {
                 UrlMapping urlMapping = (UrlMapping) method.getAnnotation(annotation);
@@ -98,14 +100,14 @@ public class Utilitaire {
             Method method = routeMapping.getMethod();
             setFieldsValue(controller, context);
 
-            return method.invoke(controller, args);
-        } catch (IllegalAccessException | InvocationTargetException e) {
+            return Reflect.invoke(method, controller, args);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     public void setFieldsValue(Object controller, SpringContext context) throws IllegalAccessException {
-        for (Field field : controller.getClass().getDeclaredFields()) {
+        for (Field field : Reflect.getAllObjectFields(controller)) {
             Class<?> type = field.getType();
             if (type.isAnnotationPresent(Service.class)) {
                 Object service = context.getBean(type);
@@ -179,16 +181,12 @@ public class Utilitaire {
         throw new RuntimeException("Les paramètres des méthodes du controller doivent être annoté avec @Param");
     }
 
-    public Parameter[] getMethodParameter(Method method){
-        return method.getParameters();
-    }
-
     public Object dynamicCast(String value, Class<?> targetType) {
 
         if (value == null) {
-            if (targetType == int.class) return 0;
+            if (targetType == int.class) return -1;
             if (targetType == boolean.class) return false;
-            if (targetType == double.class) return 0.0;
+            if (targetType == double.class) return -1.0;
             if (targetType == long.class) return 0L;
 
             return null;
@@ -231,8 +229,14 @@ public class Utilitaire {
         }
 
         if (targetType == java.util.Date.class) {
-            return java.sql.Timestamp.valueOf(
-                    java.time.LocalDateTime.parse(value)
+            if (value.contains("T")) {
+                return java.sql.Timestamp.valueOf(
+                        java.time.LocalDateTime.parse(value)
+                );
+            }
+
+            return java.sql.Date.valueOf(
+                    java.time.LocalDate.parse(value)
             );
         }
 
@@ -275,6 +279,10 @@ public class Utilitaire {
             }
         }
         return false;
+    }
+
+    public  static String capitalize(String str){
+        return str.substring(0, 1).toUpperCase(Locale.ROOT) + str.substring(1);
     }
 
     private boolean checkValue(Object value){

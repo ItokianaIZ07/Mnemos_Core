@@ -7,11 +7,14 @@ import com.mnemos.annotation.WebAPI;
 import com.mnemos.annotation.UrlMapping;
 import com.mnemos.context.SpringContext;
 import com.mnemos.exception.UrlNotFoundException;
+import com.mnemos.reflect.Reflect;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -22,6 +25,7 @@ import java.util.*;
 
 public class Utilitaire {
     private List<Class<?>> listController;
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public void scanPackage(String packageName) throws IOException, ClassNotFoundException {
         listController = new ArrayList<>();
@@ -72,7 +76,8 @@ public class Utilitaire {
         if (!annotation.isAssignableFrom(UrlMapping.class)) {
             throw new RuntimeException("Invalid annotation type");
         }
-        Method[] methods = controller.getMethods();
+        Method[] methods = Reflect.getObjectMethods(controller);
+
         for (Method method : methods) {
             if (method.isAnnotationPresent(annotation)) {
                 UrlMapping urlMapping = (UrlMapping) method.getAnnotation(annotation);
@@ -95,14 +100,14 @@ public class Utilitaire {
             Method method = routeMapping.getMethod();
             setFieldsValue(controller, context);
 
-            return method.invoke(controller, args);
-        } catch (IllegalAccessException | InvocationTargetException e) {
+            return Reflect.invoke(method, controller, args);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     public void setFieldsValue(Object controller, SpringContext context) throws IllegalAccessException {
-        for (Field field : controller.getClass().getDeclaredFields()) {
+        for (Field field : Reflect.getAllObjectFields(controller)) {
             Class<?> type = field.getType();
             if (type.isAnnotationPresent(Service.class)) {
                 Object service = context.getBean(type);
@@ -165,61 +170,7 @@ public class Utilitaire {
             throw new RuntimeException("Une erreur est survenue lors de la formatage en json: "+e);
         }
 
-//        Field[] fields = o.getClass().getDeclaredFields();
-//        System.out.println(fields.length);
-//        String json = "";
-//        StringJoiner sj = new StringJoiner(",");
-//
-//        for (Field f : fields) {
-//            System.out.println(f.getName());
-//            try{
-//                f.setAccessible(true);
-//                Object value = f.get(o);
-//                boolean isNumber = checkValue(value);
-//                json += f.getName() + ":"+value;
-//                sj.add("\""+f.getName() + "\""+":" + (isNumber ? value : "\""+value+"\""));
-//            }catch (Exception e){
-//                throw new RuntimeException("nisy erreur b: \n"+e);
-//            }
-//        }
-//        if(sj.length() != 0){
-//            json = "{"+ sj +"}";
-//        }
-
         return json;
-    }
-
-    public Object[] getRequestArguments(HttpServletRequest req, RouteMapping routeMapping){
-        /*
-        * Donnée attendu param=value&param=value(application/x-www-form-urlencoded) et non JSON
-        * */
-
-//        Enumeration<String> parameterNames = req.getParameterNames();
-        Parameter[] parameters = getMethodParameter(routeMapping.getMethod());
-
-        List<Object> argsValue = new ArrayList<>();
-        for(Parameter p: parameters){
-            String parameterName = getParameterName(p);
-            String paramValue = req.getParameter(parameterName);
-            if(paramValue == null){
-                throw new IllegalArgumentException("Le paramètre "+parameterName+" est obligatoire");
-            }
-            Object value = dynamicCast(paramValue, p.getType());
-            argsValue.add(value);
-        }
-//        tsy nampiasaina satria lasa tsy mifanaraka ny ordre anle paramètre
-//        while(parameterNames.hasMoreElements()){
-//            String paramName = parameterNames.nextElement();
-//            String paramValue = req.getParameter(paramName);
-//            for(Parameter p: parameters){
-//                String parameter = getParameterName(p);
-//                if(parameter.equals(paramName)){
-//                    Object value = dynamicCast(paramValue, p.getType());
-//                    argsValue.add(value);
-//                }
-//            }
-//        }
-        return !argsValue.isEmpty() ? argsValue.toArray() : null;
     }
 
     public String getParameterName(Parameter parameter){
@@ -230,16 +181,12 @@ public class Utilitaire {
         throw new RuntimeException("Les paramètres des méthodes du controller doivent être annoté avec @Param");
     }
 
-    public Parameter[] getMethodParameter(Method method){
-        return method.getParameters();
-    }
-
     public Object dynamicCast(String value, Class<?> targetType) {
 
         if (value == null) {
-            if (targetType == int.class) return 0;
+            if (targetType == int.class) return -1;
             if (targetType == boolean.class) return false;
-            if (targetType == double.class) return 0.0;
+            if (targetType == double.class) return -1.0;
             if (targetType == long.class) return 0L;
 
             return null;
@@ -282,8 +229,14 @@ public class Utilitaire {
         }
 
         if (targetType == java.util.Date.class) {
-            return java.sql.Timestamp.valueOf(
-                    java.time.LocalDateTime.parse(value)
+            if (value.contains("T")) {
+                return java.sql.Timestamp.valueOf(
+                        java.time.LocalDateTime.parse(value)
+                );
+            }
+
+            return java.sql.Date.valueOf(
+                    java.time.LocalDate.parse(value)
             );
         }
 
@@ -295,6 +248,41 @@ public class Utilitaire {
                             "' vers " + targetType.getName()
             );
         }
+    }
+
+    public void sendResponse(HttpServletResponse response, String data) {
+        try {
+            PrintWriter out = response.getWriter();
+
+            boolean isJson = isJson(data);
+
+            if (isJson) {
+                response.setContentType("application/json; charset=UTF-8");
+            } else {
+                response.setContentType("text/plain; charset=UTF-8");
+            }
+
+            out.print(data);
+            out.flush();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to get writer", e);
+        }
+    }
+
+    private boolean isJson(String data){
+        if (data != null && !data.isBlank()) {
+            try {
+                objectMapper.readTree(data);
+                return  true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    public  static String capitalize(String str){
+        return str.substring(0, 1).toUpperCase(Locale.ROOT) + str.substring(1);
     }
 
     private boolean checkValue(Object value){

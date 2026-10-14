@@ -98,3 +98,7 @@ ex: void save(String name, String firstName, int age)
 - mila jerena ny cas hoe manana attribut:
   - Objet le objet avy any @ formulaire
   - List
+
+## Sprint-8: upload fichier
+- Création d'une classe MapFile: file,extension, tableau de byte
+- Il faut vérifier lors du bindig si l'bojet possède un attribut MapFile

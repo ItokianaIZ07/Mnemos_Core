@@ -45,7 +45,7 @@ public class DataBinder {
                 value = Reflect.getInstance(p.getType());
                 bindObject(req, value);
             }
-            checkParamValue(value, "Aucune valeur n'est associée au paramètre "+p.getName());
+            checkParamValue(value, "Aucune valeur n'est associée au paramètre de type"+p.getType().getSimpleName());
 
             argsValue.add(value);
         }

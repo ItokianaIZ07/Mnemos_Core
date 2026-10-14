@@ -3,10 +3,12 @@ package com.mnemos.utils;
 import com.mnemos.annotation.Param;
 import com.mnemos.reflect.Reflect;
 import jakarta.servlet.http.HttpServletRequest;
+import jdk.jshell.execution.Util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,12 +38,8 @@ public class DataBinder {
             if(p.isAnnotationPresent(Param.class)){
                 value = bindParam(req, p);
             }else{ // raha ohatra hoe objet fa tsy simple param ny anle méthode
-                if(List.class.isAssignableFrom(p.getType())){
-                    throw new UnsupportedOperationException(
-                            "Le binding des listes n'est pas encore pris en charge : "
-                                    + p.getName()
-                    );
-                }
+                Utilitaire.checkCondition(List.class.isAssignableFrom(p.getType()),  "Le binding des listes n'est pas encore pris en charge : " + p.getName());
+
                 value = Reflect.getInstance(p.getType());
                 bindObject(req, value);
             }
@@ -53,6 +51,9 @@ public class DataBinder {
     }
 
     private Object bindParam(HttpServletRequest req, Parameter p){
+        if(List.class.isAssignableFrom(p.getType())){
+            return handleListArgs(req, p);
+        }
         String parameterName = this.util.getParameterName(p);
         String paramValue = req.getParameter(parameterName);
         checkParamValue(paramValue, "Le paramètre "+parameterName+" est obligatoire");
@@ -60,10 +61,24 @@ public class DataBinder {
         return this.util.dynamicCast(paramValue, p.getType());
     }
 
+    private Object handleListArgs(HttpServletRequest req, Parameter p){
+        Class<?> listParameterType = Reflect.getListElementType(p);
+        List<Object> list = new ArrayList<>();
+
+//            Method method = Reflect.getMethodByName(list, "add", "", listParameterType);
+        String paramName = util.getParameterName(p);
+        String[] params = req.getParameterValues(paramName);
+        for(String param: params){
+            list.add(util.dynamicCast(param, listParameterType));
+        }
+
+        return list;
+    }
+
     private void bindObject(HttpServletRequest req, Object o){
         Field[] fields = Reflect.getAllObjectFields(o);
         for(Field f: fields){
-            Method method = Reflect.getMethodByName(o, f, "set");
+            Method method = Reflect.getMethodByName(o, f.getName(), "set", f.getType());
             try{
                 String paramValue = req.getParameter(f.getName());
 //               checkParamValue(paramValue, "Le paramètre "+f.getName()+" est obligatoire");

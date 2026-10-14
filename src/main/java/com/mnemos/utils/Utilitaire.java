@@ -285,11 +285,11 @@ public class Utilitaire {
         return str.substring(0, 1).toUpperCase(Locale.ROOT) + str.substring(1);
     }
 
-    private boolean checkValue(Object value){
-        if(value instanceof Number){
-            return true;
+    public static void checkCondition(boolean condition, String errorMessage){
+        if(condition){
+            throw new RuntimeException(errorMessage);
         }
-        return false;
     }
+
 
 }

@@ -18,6 +18,14 @@ public class Reflect {
         return o.getClass().getDeclaredFields();
     }
 
+    public static Field getDeclaredField(Object o, String name){
+        try{
+            return o.getClass().getDeclaredField(name);
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException("Aucune méthode "+name+" dans "+o.getClass().getSimpleName(), e);
+        }
+    }
+
     public static Field[] getPublicObjectFields(Object o){
         Utilitaire.checkCondition(o == null, "Impossible d'appliquer la reflection sur un objet null");
         return o.getClass().getFields();

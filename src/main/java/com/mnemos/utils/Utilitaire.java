@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -279,6 +280,14 @@ public class Utilitaire {
             }
         }
         return false;
+    }
+
+    public byte[] readInputStream(InputStream stream){
+        try{
+            return stream.readAllBytes();
+        } catch (IOException e) {
+            throw new RuntimeException("Erreur lors de la lecture du flux d'entré",e);
+        }
     }
 
     public  static String capitalize(String str){

@@ -3,6 +3,7 @@ package com.mnemos.utils;
 import com.mnemos.annotation.Param;
 import com.mnemos.reflect.Reflect;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
 import jdk.jshell.execution.Util;
 
 import java.lang.reflect.Field;
@@ -60,11 +61,27 @@ public class DataBinder {
         if(List.class.isAssignableFrom(p.getType())){
             return handleListArgs(req, p);
         }
+        if(p.getType().equals(MapFile.class)){
+            return handleFile(req, p);
+        }
         String parameterName = this.util.getParameterName(p);
         String paramValue = req.getParameter(parameterName);
         checkParamValue(paramValue, "Le paramètre "+parameterName+" est obligatoire");
 
         return this.util.dynamicCast(paramValue, p.getType());
+    }
+
+    private Object handleFile(HttpServletRequest req, Parameter p){
+        MapFile mapFile = new MapFile();
+        try {
+            Part filePart = req.getPart(util.getParameterName(p));
+            mapFile.setFullName(filePart.getSubmittedFileName());
+            mapFile.setData(util.readInputStream(filePart.getInputStream()));
+
+            return mapFile;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Object handleListArgs(HttpServletRequest req, Parameter p){

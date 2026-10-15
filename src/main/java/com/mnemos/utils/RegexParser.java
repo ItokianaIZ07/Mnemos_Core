@@ -10,9 +10,7 @@ public class RegexParser {
 
         String regex = "\\[(\\d+)\\]\\.([^=]+)=(.*)"; // ref de type var[indice].attribut=valeur
 
-        // Compilation du pattern
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(chaine);
+        Matcher matcher = getMatcher(regex, chaine);
 
         if (matcher.find()) {
             Map<String , String> requestContent = new HashMap<>();
@@ -34,8 +32,7 @@ public class RegexParser {
         String regex = "^([a-zA-Z_$][a-zA-Z0-9_$]*)\\[(\\d+)\\]\\.([a-zA-Z_$][a-zA-Z0-9_$]*)$"; // ref de type var[indice].attribut
 
         // Compilation du pattern
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(chaine);
+        Matcher matcher = getMatcher(regex, chaine);
 
         if (matcher.find()) {
             Map<String , String> requestContent = new HashMap<>();
@@ -51,5 +48,33 @@ public class RegexParser {
         }
 
         return null;
+    }
+
+    public static Map<String, String> extractFileDetail(String chaine){
+        String regex = "^(.+)\\.([^.]+)$";
+
+        Matcher matcher = getMatcher(regex, chaine);
+
+        Map<String, String> details = new HashMap<>();
+
+        details.put("fileName", matcher.group(1));
+//        if(matcher.find(2)){
+//
+//        }
+        details.put("extension", matcher.group(2));
+
+        return details;
+    }
+
+    private static Matcher getMatcher(String regex, String chaine){
+        // Compilation du pattern
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(chaine);
+
+        if(!matcher.find()){
+            throw new RuntimeException("La chaine " +chaine+ " ne correspond pas au regex "+regex);
+        }
+
+        return matcher;
     }
 }

@@ -8,6 +8,7 @@ import com.mnemos.utils.UrlMethod;
 import com.mnemos.utils.Utilitaire;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,6 +18,7 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
 
+@MultipartConfig
 public class FrontControllerServlet extends HttpServlet {
 
     private Utilitaire util;

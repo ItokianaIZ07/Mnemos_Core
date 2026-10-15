@@ -1,63 +1,69 @@
 # À propos — Mnemos_Core
 
 ## Présentation
-Mnemos_Core est un petit framework Java orienté vers la construction d'API Web légères basées sur des annotations. Il fournit des annotations pour déclarer des contrôleurs et des mappings d'URL, une intégration avec le contexte Spring (initialisation / gestion de beans), des utilitaires de réflexion et des composants pour exposer une API via un point d'entrée servlet. Le framework gère la résolution des routes, l'injection de paramètres simples et l'importation de fichiers via une structure légère d'annotations et d'intercepteurs.
+Mnemos_Core est un framework Java pour applications Web reposant sur des annotations. Il fournit des annotations de contrôleur et de route, l'intégration avec le contexte Spring, des utilitaires de réflexion et un servlet frontal. Il gère le routage HTTP, le binding des arguments des handlers, les réponses JSON et le transfert vers des vues.
 
-Important : l'annotation `@Param` doit être utilisée uniquement pour les types primitifs (et leurs wrappers) ; pour l'importation de fichiers le type prévu est `MapFile` (utilisé pour passer un fichier).
+Important : `@Param` identifie le nom du paramètre de requête. Les valeurs simples sont converties selon les types pris en charge par `Utilitaire.dynamicCast` ; les imports de fichiers utilisent `MapFile` comme type de paramètre annoté.
 
 ## Organisation des packages (top-level)
 Voici la liste des packages principaux trouvés dans le code et leur rôle global :
 
 - com.mnemos.annotation
-  - Contient les annotations publiques du framework (déclaration de contrôleurs, mappings, paramètres, marqueurs d'API).
+  - Contient les annotations runtime utilisées pour déclarer les contrôleurs, les routes HTTP, les paramètres de requête et les handlers qui renvoient du JSON.
 - com.mnemos.context
-  - Contient la gestion du contexte d'exécution (intégration / initialisation Spring).
+  - Fournit un accès au contexte Spring et à ses beans.
 - com.mnemos.exception
-  - Contient les exceptions spécifiques du framework (erreurs de mapping, route non trouvée).
+  - Contient les exceptions dédiées aux erreurs de mapping et aux routes introuvables.
 - com.mnemos.listener
-  - Événements et listeners (lifecycle, hooks) — point d'extension pour comportements asynchrones/événements.
+  - Initialise les routes et les objets de contexte au démarrage de l'application web.
 - com.mnemos.reflect
   - Utilitaires de réflexion pour découvrir et appeler les méthodes annotées, résoudre signatures, etc.
 - com.mnemos.servlet
-  - Point d'entrée HTTP (servlet) qui reçoit les requêtes et délègue au routage/mapping du framework.
+  - Reçoit les requêtes HTTP, résout la route, lie les arguments et traite la réponse.
 - com.mnemos.utils
-  - Fonctions utilitaires réutilisables (conversion, parsing, aides IO, validation légère).
+  - Fournit le scan des contrôleurs, le routage, le binding des paramètres et des utilitaires de conversion et de réponse.
 
 ## Liste des classes identifiées et rôles détaillés
 
 Package : com.mnemos.annotation
 - Controller.java
-  - Rôle : annotation de niveau classe pour marquer une classe comme contrôleur de routes Web. Sert à regrouper des méthodes mappées et à indiquer au scanner du framework que la classe doit être inspectée pour y trouver des mappings d'URL.
+  - Rôle : annotation runtime de type (`@Target(TYPE)`) qui marque une classe comme contrôleur.
+  - Utilisation : le listener demande au scanner de ne retenir que les classes portant cette annotation, puis inspecte leurs méthodes mappées.
 - UrlMapping.java
-  - Rôle : annotation appliquée sur des méthodes (ou éventuellement sur des classes + méthodes) pour déclarer l'URL (ou pattern) via laquelle la méthode est accessible. Contient généralement l'URL path et éventuellement la méthode HTTP (GET/POST/etc.).
+  - Rôle : annotation runtime de méthode (`@Target(METHOD)`) qui associe un handler à une URL et à une méthode HTTP.
+  - Attributs : `url` vaut `/` par défaut ; `method` vaut `GET` par défaut. La valeur de `method` est comparée sans tenir compte de la casse par `UrlMethod`.
 - Param.java
-  - Rôle : annotation appliquée sur les paramètres de méthode pour indiquer que la valeur doit être extraite depuis la requête (paramètre de query, body simple, header, etc.). À noter explicitement : `@Param` est destiné uniquement aux types primitifs / types simples (int, long, boolean, String, wrappers, etc.). Pour l'import de fichier, utiliser MapFile (voir remarque).
+  - Rôle : annotation runtime de paramètre (`@Target(PARAMETER)`) dont l'attribut obligatoire `value` donne le nom du paramètre de requête.
+  - Utilisation : le binder l'emploie pour lire une valeur de formulaire/requête et la convertir au type déclaré. Elle peut aussi nommer un paramètre `MapFile` ou une liste.
 - WebAPI.java
-  - Rôle : annotation marqueur au niveau classe pour indiquer qu'il retourne un JSON.
+  - Rôle : annotation runtime de méthode (`@Target(METHOD)`) qui indique que le résultat du handler doit être traité comme une réponse JSON.
+  - Le servlet sérialise le résultat et choisit le type de contenu en fonction du contenu produit.
 
 Package : com.mnemos.context
 - SpringContext.java
-  - Rôle : wrapper / adaptateur pour l'intégration avec le conteneur Spring. Responsable de :
-    - initialiser le contexte Spring si présent,
-    - récupérer des beans et les exposer au framework,
-    - support pour injection de dépendances dans les instances contrôlées par Mnemos,
-    - fournir des hooks d'initialisation et d'arrêt (lifecycle).
+  - Rôle : petit adaptateur qui conserve une référence à `ApplicationContext`.
+  - `SpringContext(ApplicationContext)` et `setContext(ApplicationContext)` définissent le contexte ; `getContext()` le retourne.
+  - `getBean(Class<T>)` récupère un bean par son type. Si le contexte n'est pas défini, la méthode lève une `RuntimeException`.
+  - Le listener lui fournit le `WebApplicationContext` du conteneur web. `Utilitaire.invoke` s'en sert pour injecter les champs correspondant à des types annotés `@Service`.
 
 Package : com.mnemos.exception
 - RouteMappingException.java
-  - Rôle : exception levée lors d'un problème de mapping de route (par exemple mapping ambigu, signature incorrecte, paramètre manquant, type non supporté pour @Param).
+  - Rôle : exception runtime dédiée aux erreurs de mapping de route. Elle prend un message en argument. Le code actuellement consulté ne la lève pas directement.
 - UrlNotFoundException.java
-  - Rôle : exception levée quand une requête HTTP n'a pas de mapping correspondant dans le framework (404 logique).
+  - Rôle : exception runtime levée par `Utilitaire.getByUrlMethod` quand aucune route ne correspond à l'URL et à la méthode HTTP.
 
 Package : com.mnemos.listener
-- (contenu non listé dans l'index fourni)
-  - Rôle attendu : contiendra des interfaces et classes implémentant des listeners d'événements (initialisation, destruction, hooks avant/après exécution de handler, gestion d'événements asynchrones). Permet d'étendre le comportement du framework sans modifier le routeur principal.
+- AppStartListener.java
+  - Rôle : listener de cycle de vie Servlet déclaré avec `@WebListener`.
+  - À l'initialisation du contexte web, récupère le `WebApplicationContext` Spring, crée `SpringContext`, lit les paramètres de contexte `packageController`, `prefix` et `suffix`, puis construit la table des routes à partir des classes `@Controller` et des méthodes `@UrlMapping`.
+  - Publie `routes`, `prefix`, `suffix` et `springContext` dans le `ServletContext` pour le servlet frontal.
+  - Les erreurs pendant le scan sont propagées sous forme de `RuntimeException`. `contextDestroyed` n'effectue actuellement aucun traitement.
 
-## Package : com.mnemos.reflect
+#### Package : com.mnemos.reflect
 
 Ce package contient les utilitaires de réflexion Java utilisés par le framework pour inspecter les classes, récupérer leurs champs et méthodes, instancier des objets, puis invoquer dynamiquement des méthodes à l'exécution.
 
-### Classe principale
+##### Classe principale
 - Reflect.java
   - Rôle : classe utilitaire de base pour la manipulation dynamique des classes Java via reflection.
   - Elle sert à :
@@ -67,78 +73,75 @@ Ce package contient les utilitaires de réflexion Java utilisés par le framewor
     - rechercher les accesseurs getters/setters à partir d'un champ,
     - appeler une méthode Java de manière dynamique.
 
-### Méthodes de la classe Reflect
+##### Méthodes de la classe Reflect
 
-#### 1) checkValue(Object o)
-- Rôle : méthode interne de validation.
-- Comportement :
-  - vérifie si l'objet transmis est null,
-  - lance une RuntimeException si l'objet est null.
-- Utilité : éviter les erreurs de reflection sur un objet inexistant.
-
-#### 2) getMethodParameter(Method method)
+###### 1) getMethodParameter(Method method)
 - Rôle : retourne les paramètres d'une méthode.
 - Retour :
   - `Parameter[]`
-- Utilité : permet d'inspecter la signature d'une méthode Java, notamment pour comprendre quelles données elle attend.
+- Vérifie d'abord que `method` n'est pas `null`.
 
-#### 3) getAllObjectFields(Object o)
+###### 2) getAllObjectFields(Object o)
 - Rôle : récupère tous les champs déclarés de la classe de l'objet.
 - Retour :
   - `Field[]`
 - Comportement :
   - utilise `o.getClass().getDeclaredFields()`
   - inclut les champs privés, protégés et publics, même si eux ne sont pas accessibles directement.
-- Utilité : permet au framework de parcourir les propriétés internes d'un objet et de les traiter automatiquement.
+- Utilité : permet au framework de parcourir les propriétés déclarées de l'objet pour le binding et l'injection.
 
-#### 4) getPublicObjectFields(Object o)
+###### 3) getDeclaredField(Object o, String name)
+- Rôle : recherche un champ déclaré portant le nom demandé sur la classe de l'objet.
+- Retour : `Field`.
+- Si le champ n'existe pas, lève une `RuntimeException`.
+
+###### 4) getPublicObjectFields(Object o)
 - Rôle : récupère uniquement les champs publics accessibles depuis l'extérieur.
 - Retour :
   - `Field[]`
 - Comportement :
   - utilise `o.getClass().getFields()`
-- Utilité : utile quand le framework ne doit traiter que les attributs publics d'un objet.
+- Utilité : expose aussi les champs publics hérités.
 
-#### 5) getObjectMethods(Object o)
+###### 5) getObjectMethods(Object o)
 - Rôle : retourne toutes les méthodes déclarées de la classe concernée.
 - Retour :
   - `Method[]`
 - Comportement :
   - si l'objet est une classe (`Class<?>`), il retourne les méthodes déclarées de cette classe,
   - sinon, il retourne les méthodes déclarées de l'instance.
-- Utilité : permet de lister les opérations disponibles sur une classe pour les analyser ou les appeler dynamiquement.
+- Les méthodes héritées ne sont pas incluses lorsque la classe est interrogée.
 
-#### 6) getInstance(Class<?> clazz)
+###### 6) getInstance(Class<?> clazz)
 - Rôle : crée une instance d'une classe via son constructeur par défaut.
 - Comportement :
   - appelle `clazz.getDeclaredConstructor().newInstance()`
   - en cas d'erreur, lance une RuntimeException avec le message "Erreur d'instanciation".
 - Utilité : permet d'instancier automatiquement une classe sans devoir l'initialiser manuellement.
 
-#### 7) getMethodByName(Object o, Field field, String option)
-- Rôle : recherche un getter ou un setter à partir d'un champ.
+###### 7) getMethodByName(Object o, String name, String option, Class<?>... parameterType)
+- Rôle : recherche une méthode publique par nom et types de paramètres ; peut aussi construire le nom d'un getter ou setter à partir d'un nom de propriété.
 - Paramètres :
   - `o` : objet contenant le champ,
-  - `field` : champ Java à analyser,
-  - `option` : type de méthode à chercher, soit `"set"` soit `"get"`
+  - `name` : nom de la méthode ou de la propriété,
+  - `option` : chaîne vide pour le nom littéral, `"set"` ou `"get"` pour construire `set<Name>` ou `get<Name>`,
+  - `parameterType` : types exacts des paramètres attendus (par exemple le type du champ pour un setter).
 - Comportement :
-  - construit le nom de la méthode à partir du champ :
-    - `"set" + capitalize(field.getName())`
-    - `"get" + capitalize(field.getName())`
-  - puis recherche la méthode précise avec `getDeclaredMethod(methodName, field.getType())`
-- Exemple :
-  - champ `name` → méthode `setName(String)`
-  - champ `age` → méthode `getAge()`
-- Utilité : permet d'associer automatiquement un champ à son accesseur correspondant.
+  - cherche la méthode avec `getMethod`, puis la rend accessible.
+  - lève une `RuntimeException` si aucune méthode correspondante n'est trouvée ou si `option` est invalide.
 
-#### 8) invoke(Method method, Object o, Object... arguments)
+###### 8) invoke(Method method, Object o, Object... arguments)
 - Rôle : invoque dynamiquement une méthode Java.
 - Comportement :
   - appelle `method.invoke(o, arguments)`
   - si une erreur survient, elle est relancée sous forme d'Exception avec un message explicite.
 - Utilité : centralise l'appel de méthodes via reflection, ce qui facilite le traitement dynamique des handlers, des setters, ou des méthodes annotées.
 
-### Rôle global du package com.mnemos.reflect
+###### 9) getListElementType(Parameter p), getListType(Parameter p)
+- `getListType` retourne le type générique déclaré du paramètre.
+- `getListElementType` vérifie que le paramètre est une `List` paramétrée avec un seul argument de type concret, puis retourne la classe de cet élément. Les types génériques non résolus ne sont pas pris en charge.
+
+##### Rôle global du package com.mnemos.reflect
 Le package `com.mnemos.reflect` est le composant du framework chargé de la manipulation dynamique des classes Java. Il intervient dans les cas suivants :
 - inspection des contrôleurs et des méthodes annotées,
 - lecture des champs et des méthodes d'un objet,
@@ -154,20 +157,43 @@ En pratique, ce package est un moteur d'introspection de runtime utilisé pour r
 - appeler les méthodes sans codage manuel explicite.
 
 ### Remarque importante
-Le `@Param` du framework est conçu principalement pour les types primitifs et les types simples. Pour l'import de fichiers, il faut utiliser `MapFile` plutôt que `@Param`. Cela signifie que le mécanisme de reflection est utilisé pour l'injection de valeurs simples et pour la gestion des objets spécifiques du framework, sans mélanger les responsabilités.
+`@Param` sert à nommer les valeurs issues de la requête, y compris pour un paramètre `MapFile`. Les objets métier peuvent aussi être liés sans `@Param` : le binder les instancie et renseigne leurs champs depuis les paramètres de requête.
 Package : com.mnemos.servlet
-- (contenu non listé dans l'index fourni)
-  - Rôle attendu : implémentation d'un HttpServlet (ou équivalent) qui :
-    - reçoit la requête HTTP,
-    - extrait le path et la méthode HTTP,
-    - délègue au mécanisme de routage (UrlMapping) pour trouver le handler,
-    - résout et injecte les paramètres annotés (via @Param ou MapFile),
-    - exécute le handler et sérialise la réponse,
-    - gère les exceptions du framework (RouteMappingException -> 500, UrlNotFoundException -> 404, etc.).
+- FrontControllerServlet.java
+  - Rôle : servlet frontal configuré pour le multipart (`@MultipartConfig`), qui traite les requêtes `GET` et `POST`.
+  - À l'initialisation, récupère du `ServletContext` les attributs `routes`, `prefix`, `suffix` et `springContext`, puis crée le binder des données.
+  - Pour chaque requête, retire le chemin de contexte, cherche la route correspondante à partir de l'URL et de la méthode HTTP, construit les arguments avec `DataBinder`, puis invoque le handler.
+  - Si le handler renvoie un `ModelAndView`, copie ses attributs dans la requête et transmet le traitement à la vue construite comme `prefix + url + suffix`.
+  - Si la méthode porte `@WebAPI`, sérialise le résultat et l'envoie dans la réponse. Pour les autres résultats, le comportement actuel écrit le texte fixe `TEST`.
+- ModelAndView.java
+  - Rôle : objet simple représentant une vue et ses attributs.
+  - Le constructeur reçoit l'URL de la vue ; `setAttribute` ajoute/remplace une valeur, `getAttribute` lit une valeur, `getListAttributes` retourne la map complète et `getUrl` retourne l'URL.
 
 Package : com.mnemos.utils
-- (contenu non listé dans l'index fourni)
-  - Rôle attendu : fonctions utilitaires communes : conversion de types (String → int/boolean/date), gestion de MapFile, helpers IO, helpers pour la construction de réponses, aids pour logging léger.
+- Utilitaire.java
+  - Rôle : coordonne la découverte des contrôleurs, la création/recherche des routes, l'invocation des handlers et plusieurs opérations de conversion et de réponse.
+  - `scanPackage` charge les classes trouvées directement dans le package demandé ; `scanControllersInPackage` conserve celles qui portent l'annotation de contrôleur, puis `scanMethod` enregistre les méthodes annotées avec leur instance et leur `UrlMapping`. Une route déjà présente provoque une erreur.
+  - `getByUrlMethod` récupère une route ou lève `UrlNotFoundException`. `invoke` injecte dans le contrôleur ses champs de type annoté `@Service` avant l'appel de la méthode.
+  - `dynamicCast` prend en charge `int`, `long`, `double`, `boolean`, `String`, `LocalDate`, `LocalDateTime`, `java.sql.Date` et `java.util.Date`. Les autres types non convertibles lèvent une erreur.
+  - `toJSON` sérialise avec Jackson ; `sendResponse` écrit la réponse avec un type `application/json` ou `text/plain` déterminé à partir du contenu.
+- UrlMethod.java
+  - Rôle : clé de la table de routage, composée de l'URL et de la méthode HTTP.
+  - `equals` et `hashCode` normalisent la méthode HTTP en majuscules et ignorent la query string dans l'URL.
+- RouteMapping.java
+  - Rôle : associe une instance de contrôleur à la méthode Java qui traite une route.
+- DataBinder.java
+  - Rôle : construit le tableau d'arguments d'un handler à partir des paramètres HTTP.
+  - Pour un paramètre annoté `@Param`, lit son nom avec `Param.value`, convertit sa valeur et gère les listes de valeurs répétées ainsi que `MapFile`.
+  - Pour un paramètre objet sans `@Param`, crée une instance via son constructeur sans argument et renseigne ses champs à partir des paramètres portant les noms des champs.
+  - Pour une liste d'objets, regroupe les propriétés reçues avec une notation indexée telle que `objet[0].champ`. La liste doit déclarer un type d'élément concret.
+- MapFile.java
+  - Rôle : représentation d'un fichier importé contenant son nom, son extension et ses octets.
+  - `setFullName` sépare le nom et l'extension ; `setExtension` refuse une extension contenant un point.
+  - `getContent` tente un décodage UTF-8 et renvoie une représentation des octets si les données ne sont pas du texte UTF-8 valide. `save(path)` écrit le fichier dans le chemin demandé en créant les répertoires parents manquants.
+- RegexParser.java
+  - Rôle : extrait des éléments de chaînes correspondant aux formats utilisés pour les paramètres indexés et les noms de fichier.
+  - `extractObject` décompose une référence telle que `objet[0].champ` en nom de variable, indice et attribut ; `extractFullParameter` décompose une affectation indexée contenant une valeur ; `extractFileDetail` sépare le nom et l'extension.
+  - Les chaînes qui ne correspondent pas aux expressions régulières attendues entraînent une erreur.
 
 Autres éléments à la racine
 - pom.xml
@@ -180,23 +206,19 @@ Autres éléments à la racine
 ## Flux d'exécution (vue d'ensemble, requête → réponse)
 1. Le serveur / conteneur web envoie toutes les requêtes HTTP au servlet principal fourni dans com.mnemos.servlet.
 2. Le servlet extrait le chemin de la requête et la méthode HTTP, puis appelle le composant de routage.
-3. Le scanner/reflection (com.mnemos.reflect) a préalablement construit une table de routage en parcourant toutes les classes annotées `@Controller` et `@WebAPI`, lisant les `@UrlMapping` et enregistrant les méthodes handlers.
+3. `AppStartListener` construit la table de routage en parcourant le package indiqué par `packageController`, en sélectionnant les classes `@Controller` et en enregistrant leurs méthodes `@UrlMapping`.
 4. Le routeur recherche la méthode correspondante :
-   - Si aucune méthode trouvée → lève UrlNotFoundException (404).
-   - Si plusieurs méthodes correspondent ou signature invalide → RouteMappingException.
+   - Si aucune méthode n'est trouvée → lève `UrlNotFoundException` (le servlet ne traduit pas actuellement cette exception en code HTTP).
+   - Une URL et une méthode HTTP déjà enregistrées provoquent une erreur au scan.
 5. Pour la méthode choisie, le résolveur de paramètres instancie les arguments :
-   - Pour chaque paramètre annoté `@Param` (primitif) : convertir la valeur de la requête au type attendu.
-   - Pour l'import de fichiers : passer une instance de `MapFile` (gestion de l'upload/stream).
-6. Le framework invoque la méthode handler (utilisant SpringContext pour résoudre/injecter des beans si nécessaire) et récupère un objet résultat.
-7. Le résultat est sérialisé en réponse HTTP (JSON/Text/etc.) par une utilité du package utils ou par un adaptateur de sérialisation.
-8. Les exceptions sont capturées et transformées en codes HTTP appropriés (404, 500, 400 selon le cas), avec logs éventuels.
+   - Pour chaque paramètre `@Param`, le binder lit le nom spécifié et convertit la valeur ; les listes et `MapFile` ont un traitement dédié.
+   - Les paramètres objets non annotés sont instanciés puis remplis à partir des paramètres de requête.
+6. `Utilitaire.invoke` injecte les champs Spring annotés `@Service`, invoque le handler et récupère son résultat.
+7. Le servlet transmet les résultats `ModelAndView` à une vue, sérialise en réponse les méthodes annotées `@WebAPI` et écrit actuellement `TEST` dans les autres cas.
+8. `UrlNotFoundException` est levée lorsqu'aucune route n'existe. Le servlet ne définit pas dans son code actuel de traduction générale des exceptions vers des codes HTTP.
 
 ## Règles et conventions importantes
-- @Param : réservé aux types primitifs / wrappers / String. N'utiliser @Param pour des objets complexes ; pour ces derniers, prévoir un mécanisme de binding dédié (non fourni par @Param).
-- MapFile : utilisé pour indiquer l'importation d'un fichier dans un paramètre de méthode (upload). Le framework doit fournir la conversion de la part multipart/form-data vers MapFile.
-- Les classes annotées `@Controller` et `@WebAPI` sont automatiquement scannées au démarrage (ou au premier accès) ; pour intégrer Spring, utiliser SpringContext afin de récupérer et injecter des beans.
-- Les exceptions spécifiques du framework (RouteMappingException, UrlNotFoundException) servent à centraliser le traitement d'erreur pour produire des réponses HTTP cohérentes.
-
-
----
-Si tu veux que je crée automatiquement ce fichier docs/about.md dans le dépôt, je peux le faire (je mettrai exactement ce contenu dans docs/about.md). Veux-tu que je le commette maintenant ?
+- `@Param` nomme une valeur lue dans la requête ; les types convertis par `Utilitaire.dynamicCast` sont ceux décrits plus haut. Les objets complexes sans `@Param` suivent le binding par champs de `DataBinder`.
+- Un paramètre `MapFile` doit être annoté avec `@Param` et nécessite une requête multipart ; le servlet est annoté `@MultipartConfig`.
+- Seules les classes `@Controller` et les méthodes `@UrlMapping` servent à construire les routes. `@WebAPI` s'applique aux méthodes et sélectionne le traitement JSON de leur résultat.
+- `RouteMappingException` et `UrlNotFoundException` existent comme exceptions du framework ; seul `UrlNotFoundException` est actuellement utilisé par le code de routage.

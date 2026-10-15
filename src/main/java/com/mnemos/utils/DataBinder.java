@@ -143,7 +143,7 @@ public class DataBinder {
                     i -> Reflect.getInstance(paramType)
             );
 
-            Class<?> attributType = Reflect.getDeclaredField(paramType, attribut).getType();
+            Class<?> attributType = Reflect.getDeclaredField(Reflect.getInstance(paramType), attribut).getType();
 
             Method method = Reflect.getMethodByName(paramObject, attribut, "set", attributType);
 

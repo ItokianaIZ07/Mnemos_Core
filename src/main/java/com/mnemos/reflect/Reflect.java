@@ -20,9 +20,10 @@ public class Reflect {
 
     public static Field getDeclaredField(Object o, String name){
         try{
+            System.out.println(o.getClass().getName());
             return o.getClass().getDeclaredField(name);
         } catch (NoSuchFieldException e) {
-            throw new RuntimeException("Aucune méthode "+name+" dans "+o.getClass().getSimpleName(), e);
+            throw new RuntimeException("Aucun chant "+name+" dans "+o.getClass().getSimpleName(), e);
         }
     }
 

@@ -75,7 +75,7 @@ public class MapFile {
         setExtension(fileDetails.get("extension"));
     }
 
-    private String fullName(){
+    public String fullName(){
         return fileName+"."+extension;
     }
 

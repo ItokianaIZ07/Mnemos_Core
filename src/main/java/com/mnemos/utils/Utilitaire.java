@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -281,15 +282,33 @@ public class Utilitaire {
         return false;
     }
 
+    public byte[] readInputStream(InputStream stream){
+        try{
+            return stream.readAllBytes();
+        } catch (IOException e) {
+            throw new RuntimeException("Erreur lors de la lecture du flux d'entré",e);
+        }
+    }
+
     public  static String capitalize(String str){
         return str.substring(0, 1).toUpperCase(Locale.ROOT) + str.substring(1);
     }
 
-    private boolean checkValue(Object value){
-        if(value instanceof Number){
-            return true;
+    public static void checkCondition(boolean condition, String errorMessage){
+        if(condition){
+            throw new RuntimeException(errorMessage);
         }
-        return false;
+    }
+
+    public boolean isSimpleType(Class<?> type) {
+        return type.isPrimitive()
+                || type == String.class
+                || type == Boolean.class
+                || type == Character.class
+                || Number.class.isAssignableFrom(type)
+                || type.isEnum()
+                || type == Date.class
+                || type == java.sql.Date.class;
     }
 
 }

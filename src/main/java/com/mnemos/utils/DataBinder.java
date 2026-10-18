@@ -98,18 +98,81 @@ public class DataBinder {
         return list;
     }
 
-    private void bindObject(HttpServletRequest req, Object o){
+    private void bindObject(HttpServletRequest req, Object o) {
+        bindObject(req, o, "");
+    }
 
+//    private void bindObject(HttpServletRequest req, Object o){
+//
+//        Field[] fields = Reflect.getAllObjectFields(o);
+//        for(Field f: fields){
+//            Method method = Reflect.getMethodByName(o, f.getName(), "set", f.getType());
+//            try{
+//                String paramValue = req.getParameter(f.getName());
+////               checkParamValue(paramValue, "Le paramètre "+f.getName()+" est obligatoire");
+//
+//                Reflect.invoke(method, o, this.util.dynamicCast(paramValue, f.getType()));
+//            } catch (Exception e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
+//    }
+
+    private void bindObject(
+            HttpServletRequest req,
+            Object o,
+            String prefix
+    ) {
         Field[] fields = Reflect.getAllObjectFields(o);
-        for(Field f: fields){
-            Method method = Reflect.getMethodByName(o, f.getName(), "set", f.getType());
-            try{
-                String paramValue = req.getParameter(f.getName());
-//               checkParamValue(paramValue, "Le paramètre "+f.getName()+" est obligatoire");
 
-                Reflect.invoke(method, o, this.util.dynamicCast(paramValue, f.getType()));
+        for (Field f : fields) {
+            String fieldName = f.getName();
+            Class<?> fieldType = f.getType();
+
+            String paramName = prefix + fieldName;
+
+            try {
+                Method setter = Reflect.getMethodByName(
+                        o, fieldName, "set", fieldType
+                );
+
+                if (this.util.isSimpleType(fieldType)) {
+                    String paramValue = req.getParameter(paramName);
+
+                    if (paramValue == null) {
+                        continue;
+                    }
+
+                    Object value = util.dynamicCast(
+                            paramValue, fieldType
+                    );
+
+                    Reflect.invoke(setter, o, value);
+
+                } else {
+                    // Exemple : departement.id
+                    String childPrefix = paramName + ".";
+
+                    boolean hasChildParams =
+                            req.getParameterMap().keySet().stream()
+                                    .anyMatch(name -> name.startsWith(childPrefix));
+
+                    if (!hasChildParams) {
+                        continue;
+                    }
+
+                    Object child = Reflect.getInstance(fieldType);
+
+                    bindObject(req, child, childPrefix);
+
+                    Reflect.invoke(setter, o, child);
+                }
+
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException(
+                        "Erreur de binding de l'attribut : " + paramName,
+                        e
+                );
             }
         }
     }
@@ -125,6 +188,7 @@ public class DataBinder {
 
         for (Map.Entry<String, String[]> entry : parameters.entrySet()) {
             String param = entry.getKey();
+            System.out.println(param);
 
             Map<String, String> objectParam =
                     RegexParser.extractObject(param);

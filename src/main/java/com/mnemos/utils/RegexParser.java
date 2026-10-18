@@ -69,12 +69,7 @@ public class RegexParser {
     private static Matcher getMatcher(String regex, String chaine){
         // Compilation du pattern
         Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(chaine);
 
-        if(!matcher.find()){
-            throw new RuntimeException("La chaine " +chaine+ " ne correspond pas au regex "+regex);
-        }
-
-        return matcher;
+        return pattern.matcher(chaine);
     }
 }

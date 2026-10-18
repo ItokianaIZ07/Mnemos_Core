@@ -300,5 +300,15 @@ public class Utilitaire {
         }
     }
 
+    public boolean isSimpleType(Class<?> type) {
+        return type.isPrimitive()
+                || type == String.class
+                || type == Boolean.class
+                || type == Character.class
+                || Number.class.isAssignableFrom(type)
+                || type.isEnum()
+                || type == Date.class
+                || type == java.sql.Date.class;
+    }
 
 }

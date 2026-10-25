@@ -3,6 +3,7 @@ package com.mnemos.listener;
 import com.mnemos.annotation.Controller;
 import com.mnemos.annotation.UrlMapping;
 import com.mnemos.context.SpringContext;
+import com.mnemos.servlet.Session;
 import com.mnemos.utils.RouteMapping;
 import com.mnemos.utils.UrlMethod;
 import com.mnemos.utils.Utilitaire;
@@ -30,12 +31,14 @@ public class AppStartListener implements ServletContextListener {
         try {
 //            List<String> controllers = util.getListController(packageName, Controller.class);
             Map<UrlMethod, RouteMapping> routes = new HashMap<>();
+            Map<String, Session> httpSession = new HashMap<>();
 
             util.scanControllersInPackage(packageName, routes, Controller.class, UrlMapping.class);
 
             context.setAttribute("routes", routes);
             context.setAttribute("prefix", prefix);
             context.setAttribute("suffix", suffix);
+            context.setAttribute("session", httpSession);
             context.setAttribute("springContext", springContext);
         } catch (Exception e) {
             throw new RuntimeException(e);

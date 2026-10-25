@@ -12,6 +12,7 @@ import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -28,7 +29,7 @@ public class FrontControllerServlet extends HttpServlet {
     private String prefix;
     private SpringContext context;
     private DataBinder dataBinder;
-
+    private Map<String, Session> sessions;
 
     public void init(){
         util = new Utilitaire();
@@ -37,6 +38,7 @@ public class FrontControllerServlet extends HttpServlet {
         prefix = getServletContext().getAttribute("prefix").toString();
         suffix = getServletContext().getAttribute("suffix").toString();
         context = (SpringContext) getServletContext().getAttribute("springContext");
+        sessions = (Map<String , Session>) getServletContext().getAttribute("session");
         /* Raha tsy hampiasa listener sinon any ambany */
 //        Utilitaire util = new Utilitaire();
 //        String packageName = getInitParameter("packageController");
@@ -69,10 +71,12 @@ public class FrontControllerServlet extends HttpServlet {
     }
 
     private void processRequest(HttpServletRequest req, HttpServletResponse res, String url, String method) throws IOException, ServletException {
+//        util.initSession(req, sessions); tsy nandeha le session fa mbol misy stockena ao @httpSession
+
         UrlMethod um = new UrlMethod(url, method);
         RouteMapping routeMapping = util.getByUrlMethod(um, routes);
 //        if(req.getMethod().equals("GET")){
-            Object[] requestArgs = dataBinder.getRequestArguments(req, routeMapping);
+            Object[] requestArgs = dataBinder.getRequestArguments(req, routeMapping, sessions);
             Object objectInvoked = util.invoke(routeMapping, context, requestArgs);
             if(objectInvoked instanceof ModelAndView){
                 ModelAndView modelAndView = (ModelAndView) objectInvoked;

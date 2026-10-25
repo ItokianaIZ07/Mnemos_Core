@@ -2,17 +2,16 @@ package com.mnemos.utils;
 
 import com.mnemos.annotation.Param;
 import com.mnemos.reflect.Reflect;
+import com.mnemos.servlet.Session;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class DataBinder {
     private Utilitaire util;
@@ -27,7 +26,7 @@ public class DataBinder {
         }
     }
 
-    public Object[] getRequestArguments(HttpServletRequest req, RouteMapping routeMapping){
+    public Object[] getRequestArguments(HttpServletRequest req, RouteMapping routeMapping, Map<String, Session> sessionMap){
         /*
          * Donnée attendu param=value&param=value(application/x-www-form-urlencoded) et non JSON
          * */
@@ -37,6 +36,9 @@ public class DataBinder {
         List<Object> argsValue = new ArrayList<>();
         for(Parameter p: parameters){
             Object value = null;
+            if(p.isAnnotationPresent(Param.class) && p.getType().equals(Session.class)){
+                throw new RuntimeException("Les paramètres de type Session ne doivent pas être annoté avec Param");
+            }
             if(p.isAnnotationPresent(Param.class)){
                 value = bindParam(req, p);
             }else{ // raha ohatra hoe objet fa tsy simple param ny anle méthode
@@ -44,7 +46,9 @@ public class DataBinder {
 
                 if(List.class.isAssignableFrom(p.getType())){
                      value = handleListObject(req, p);
-                }else{
+                } else if (p.getType().equals(Session.class)) {
+                    value = handleSession(req, p, sessionMap);
+                } else{
                     value = Reflect.getInstance(p.getType());
                     bindObject(req, value);
                 }
@@ -235,5 +239,22 @@ public class DataBinder {
         }
 
         return new ArrayList<>(objects.values());
+    }
+
+    private Session handleSession(HttpServletRequest req, Parameter p, Map<String, Session> sessionMap){
+        HttpSession httpSession = req.getSession();
+        for(Map.Entry<String, Session> entry: sessionMap.entrySet()){
+            System.out.println(entry.getKey());
+        }
+
+        String idSession = httpSession.getId();
+        if(sessionMap.containsKey(idSession)){
+            return sessionMap.get(idSession);
+        }
+        Session session =  (Session) Reflect.getInstance(p.getType());
+        sessionMap.put(idSession, session);
+
+
+        return session;
     }
 }

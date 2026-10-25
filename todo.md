@@ -102,3 +102,16 @@ ex: void save(String name, String firstName, int age)
 ## Sprint-8: upload fichier
 - Création d'une classe MapFile: file,extension, tableau de byte
 - Il faut vérifier lors du bindig si l'bojet possède un attribut MapFile
+
+## Sprint-9: session
+- Configurer une session pour que le développeur puisse ajouter, récuperer une variable
+- Utiliser une variable Session et Map contenant la session et ensuite, synchoniser le Map avec HttpSession:
+  - Verifiena le map raha ef misy id de l'httpSession, raha tsisy d ajoutena sinon alaina le instance ef nisy
+
+## Sprint-10:
+- tsy maintsy authentifie le olona vo mahazo mi-executé méthode
+- mamorona annotation auth d ze méthode annoté @iny mila authentifié vo afaka invoquena
+- stockena anaty init-param ny clé ana session ilaina hamantarana fa connecté le utilisateur
+
+## Sprint-10-bis:
+- Mila rôle koa ny execution voa afaka atao

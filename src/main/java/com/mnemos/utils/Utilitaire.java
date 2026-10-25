@@ -8,8 +8,10 @@ import com.mnemos.annotation.UrlMapping;
 import com.mnemos.context.SpringContext;
 import com.mnemos.exception.UrlNotFoundException;
 import com.mnemos.reflect.Reflect;
+import com.mnemos.servlet.Session;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -311,4 +313,19 @@ public class Utilitaire {
                 || type == java.sql.Date.class;
     }
 
+    public void initSession(HttpServletRequest req, Map<String, Session> sessionMap){
+        HttpSession httpSession = req.getSession();
+        Enumeration<String> sessionAttributeNames = httpSession.getAttributeNames();
+        Session session = new Session();
+
+        while(sessionAttributeNames.hasMoreElements()){
+            String name = sessionAttributeNames.nextElement();
+            Object sessionValue = httpSession.getAttribute(name);
+            session.setData(name, sessionValue);
+        }
+
+        sessionMap.put(httpSession.getId(), session);
+        System.out.println(sessionMap.size());
+        System.out.println(session.getData().size());
+    }
 }

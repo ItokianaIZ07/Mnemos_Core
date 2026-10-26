@@ -16,6 +16,7 @@ public class MapFile {
     private String fileName;
     private String extension;
     private byte[] data;
+    private String path;
 
     public MapFile(){}
 
@@ -62,6 +63,7 @@ public class MapFile {
             }
 
             Files.write(savePath, this.data);
+            this.path = path;
             System.out.println("Fichier enregistré avec succès !");
         } catch (IOException e) {
             System.err.println("Erreur lors de l'enregistrement : " + e.getMessage());
@@ -89,5 +91,12 @@ public class MapFile {
         } catch (CharacterCodingException e) {
             return Arrays.toString(this.data);
         }
+    }
+
+    public String getPath(){
+        if(this.path == null){
+            throw new RuntimeException("Ce fichier n'as pas encore été sauvegargé");
+        }
+        return this.path;
     }
 }

@@ -30,6 +30,7 @@ public class FrontControllerServlet extends HttpServlet {
     private SpringContext context;
     private DataBinder dataBinder;
     private Map<String, Session> sessions;
+    private String authKey;
 
     public void init(){
         util = new Utilitaire();
@@ -39,6 +40,7 @@ public class FrontControllerServlet extends HttpServlet {
         suffix = getServletContext().getAttribute("suffix").toString();
         context = (SpringContext) getServletContext().getAttribute("springContext");
         sessions = (Map<String , Session>) getServletContext().getAttribute("session");
+        authKey = getServletContext().getAttribute("authKey").toString();
         /* Raha tsy hampiasa listener sinon any ambany */
 //        Utilitaire util = new Utilitaire();
 //        String packageName = getInitParameter("packageController");
@@ -77,7 +79,7 @@ public class FrontControllerServlet extends HttpServlet {
         RouteMapping routeMapping = util.getByUrlMethod(um, routes);
 //        if(req.getMethod().equals("GET")){
             Object[] requestArgs = dataBinder.getRequestArguments(req, routeMapping, sessions);
-            Object objectInvoked = util.invoke(routeMapping, context, requestArgs);
+            Object objectInvoked = util.invoke(routeMapping, context, sessions, req, authKey, requestArgs);
             if(objectInvoked instanceof ModelAndView){
                 ModelAndView modelAndView = (ModelAndView) objectInvoked;
                 Map<String, Object> attributes = modelAndView.getListAttributes();

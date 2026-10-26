@@ -2,6 +2,7 @@ package com.mnemos.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mnemos.annotation.Auth;
 import com.mnemos.annotation.Param;
 import com.mnemos.annotation.WebAPI;
 import com.mnemos.annotation.UrlMapping;
@@ -97,10 +98,13 @@ public class Utilitaire {
         }
     }
 
-    public Object invoke(RouteMapping routeMapping, SpringContext context, Object... args) {
+    public Object invoke(RouteMapping routeMapping, SpringContext context, Map<String, Session> sessionMap, HttpServletRequest req, String authKey, Object... args) {
         try {
             Object controller = routeMapping.getController();
             Method method = routeMapping.getMethod();
+            if(method.isAnnotationPresent(Auth.class)){
+                Session.checkSession(req, sessionMap, authKey);
+            }
             setFieldsValue(controller, context);
 
             return Reflect.invoke(method, controller, args);

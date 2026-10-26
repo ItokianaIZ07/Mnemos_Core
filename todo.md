@@ -115,3 +115,5 @@ ex: void save(String name, String firstName, int age)
 
 ## Sprint-10-bis:
 - Mila rôle koa ny execution voa afaka atao
+- Le annotation resaka role sy auth mila miaraka ampiasaina
+- ny auth afaka mandeha rery

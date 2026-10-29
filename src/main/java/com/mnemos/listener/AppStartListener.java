@@ -29,6 +29,7 @@ public class AppStartListener implements ServletContextListener {
         String prefix = context.getInitParameter("prefix");
         String suffix = context.getInitParameter("suffix");
         String auth = context.getInitParameter("authKey");
+        String role = context.getInitParameter("roleKey");
         try {
 //            List<String> controllers = util.getListController(packageName, Controller.class);
             Map<UrlMethod, RouteMapping> routes = new HashMap<>();
@@ -42,6 +43,7 @@ public class AppStartListener implements ServletContextListener {
             context.setAttribute("session", httpSession);
             context.setAttribute("springContext", springContext);
             context.setAttribute("authKey", auth);
+            context.setAttribute("roleKey", role);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -243,9 +243,9 @@ public class DataBinder {
 
     private Session handleSession(HttpServletRequest req, Parameter p, Map<String, Session> sessionMap){
         HttpSession httpSession = req.getSession();
-        for(Map.Entry<String, Session> entry: sessionMap.entrySet()){
-            System.out.println(entry.getKey());
-        }
+//        for(Map.Entry<String, Session> entry: sessionMap.entrySet()){
+//            System.out.println(entry.getKey());
+//        }
 
         String idSession = httpSession.getId();
         if(sessionMap.containsKey(idSession)){

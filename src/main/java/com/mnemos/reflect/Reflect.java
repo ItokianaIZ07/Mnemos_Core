@@ -79,7 +79,7 @@ public class Reflect {
         try{
             return method.invoke(o, arguments);
         }catch (Exception e){
-            throw new Exception("Une erreur est survenue lors de l'invoquation de la méthode: "+e, e);
+            throw new Exception("Une erreur est survenue lors de l'invoquation de la méthode: "+e.getMessage(), e);
         }
     }
 
